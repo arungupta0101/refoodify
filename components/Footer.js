@@ -34,7 +34,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-700 text-center">
-          <p className="text-gray-400 text-sm">Made with ❤️ for a better world</p>
+          <p className="text-gray-400 text-sm">Made with ❤️ by Arun Gupta for a better world</p>
         </div>
       </div>
     </footer>

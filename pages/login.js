@@ -15,7 +15,6 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if the user is returning from an email link
     if (isSignInWithEmailLink(auth, window.location.href)) {
       let email = window.localStorage.getItem('emailForSignIn');
       if (!email) {
@@ -23,7 +22,6 @@ export default function Login() {
       }
       signInWithEmailLink(auth, email, window.location.href)
         .then(async (result) => {
-          // Check if user document exists, if not create it via API
           const response = await fetch('/api/create-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -47,11 +45,18 @@ export default function Login() {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+
+    // --- HARDCODED ADMIN CHECK ---
+    if (email === 'arunjacker0101@gmail.com' && password === 'Arun@12345') {
+      toast.success('Welcome Admin, Arun!');
+      localStorage.setItem('isAdmin', 'true'); // Store admin session
+      router.push('/admin-dashboard');
+      return;
+    }
+
     try {
       if (isRegister) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // Create user in database via API
         const response = await fetch('/api/create-user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -63,7 +68,6 @@ export default function Login() {
         });
         
         if (!response.ok) throw new Error('Failed to create user');
-        
         toast.success('Account created successfully!');
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -97,16 +101,14 @@ export default function Login() {
       return;
     }
     try {
-      // Check if email exists via API
       const response = await fetch(`/api/check-user?email=${encodeURIComponent(email)}`);
       const data = await response.json();
       
       if (!data.exists) {
-        toast.error('Account not found. Please register your account first.');
+        toast.error('Account not found. Please register first.');
         return;
       }
       
-      // Email exists, send reset email
       await sendPasswordResetEmail(auth, email);
       toast.success('Password reset email sent!');
     } catch (error) {
@@ -118,34 +120,36 @@ export default function Login() {
     <>
       <Header />
       <main className="py-12 px-4 max-w-md mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">Sign In</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center text-primary">Refoodify Portal</h1>
 
         {/* Auth Method Toggle */}
-        <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
+        <div className="flex mb-6 bg-gray-100 rounded-xl p-1 shadow-inner">
           <button
             onClick={() => setAuthMethod('password')}
-            className={`flex-1 py-2 px-4 rounded-md transition ${authMethod === 'password' ? 'bg-primary text-white' : 'text-gray-600'}`}
+            className={`flex-1 py-2 px-4 rounded-lg transition-all ${authMethod === 'password' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary'}`}
           >
             Password
           </button>
           <button
             onClick={() => setAuthMethod('emailLink')}
-            className={`flex-1 py-2 px-4 rounded-md transition ${authMethod === 'emailLink' ? 'bg-primary text-white' : 'text-gray-600'}`}
+            className={`flex-1 py-2 px-4 rounded-lg transition-all ${authMethod === 'emailLink' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary'}`}
           >
             Email Link
           </button>
         </div>
 
         {authMethod === 'password' ? (
-          <>
-            <h2 className="text-xl font-semibold mb-4 text-center">{isRegister ? 'Create Account' : 'Sign In'}</h2>
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 animate-fadeIn">
+            <h2 className="text-xl font-semibold mb-6 text-center text-gray-800">
+              {isRegister ? 'Join Refoodify' : 'Welcome Back'}
+            </h2>
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
                 required
               />
               <input
@@ -153,74 +157,78 @@ export default function Login() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
                 required
               />
               {isRegister && (
                 <select
                   value={userType}
                   onChange={(e) => setUserType(e.target.value)}
-                  className="w-full p-3 border rounded"
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all bg-white"
                 >
-                  <option value="user">User</option>
-                  <option value="donor">Donor</option>
-                  <option value="ngo">NGO</option>
+                  <option value="user">Individual User</option>
+                  <option value="donor">Food Donor / Restaurant</option>
+                  <option value="ngo">NGO / Charity</option>
                 </select>
               )}
-              <button type="submit" className="w-full bg-primary text-white p-3 rounded">
-                {isRegister ? 'Create Account' : 'Sign In'}
+              <button type="submit" className="w-full bg-primary text-white p-3 rounded-xl font-bold shadow-lg hover:bg-opacity-90 transform active:scale-95 transition-all">
+                {isRegister ? 'Register' : 'Login'}
               </button>
             </form>
-            <div className="mt-4 text-center space-y-2">
-              <button
-                onClick={() => setIsRegister(!isRegister)}
-                className="text-primary underline"
-              >
-                {isRegister ? 'Already have an account? Sign In' : 'Need an account? Create one'}
+            <div className="mt-6 text-center space-y-3">
+              <button onClick={() => setIsRegister(!isRegister)} className="text-sm text-primary hover:underline font-medium">
+                {isRegister ? 'Already have an account? Sign In' : 'New to Refoodify? Create an account'}
               </button>
               {!isRegister && (
                 <div>
-                  <button
-                    onClick={handleForgotPassword}
-                    className="text-sm text-gray-600 underline"
-                  >
+                  <button onClick={handleForgotPassword} className="text-xs text-gray-400 hover:text-gray-600">
                     Forgot Password?
                   </button>
                 </div>
               )}
             </div>
-          </>
+          </div>
         ) : (
-          <>
-            <h2 className="text-xl font-semibold mb-4 text-center">Passwordless Sign In</h2>
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 animate-fadeIn">
+            <h2 className="text-xl font-semibold mb-6 text-center text-gray-800">Magic Link Sign-In</h2>
             <form onSubmit={handleEmailLinkSubmit} className="space-y-4">
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
                 required
               />
               <select
                 value={userType}
                 onChange={(e) => setUserType(e.target.value)}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all bg-white"
               >
                 <option value="user">User</option>
                 <option value="donor">Donor</option>
                 <option value="ngo">NGO</option>
               </select>
-              <button type="submit" className="w-full bg-primary text-white p-3 rounded">
-                Send Sign-In Link
+              <button type="submit" className="w-full bg-primary text-white p-3 rounded-xl font-bold shadow-lg">
+                Send Magic Link
               </button>
             </form>
-            <p className="text-center mt-4 text-sm text-gray-600">
-              Check your email for a secure sign-in link. No password needed!
+            <p className="text-center mt-6 text-xs text-gray-400 leading-relaxed">
+              We'll send a link to your inbox that logs you in automatically. No password needed!
             </p>
-          </>
+          </div>
         )}
       </main>
+      
+      <style jsx>{`
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <Footer />
     </>
   );

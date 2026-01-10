@@ -1,5 +1,5 @@
-import clientPromise from '../../lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { db } from '../../lib/firebase';
+import { doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export default async function handler(req, res) {
   if (req.method !== 'PUT') {
@@ -7,42 +7,44 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { id, updates } = req.body;
-    const client = await clientPromise;
-    const db = client.db('refoodify_db');
+    const { id, updates } = req.body; // 'id' yahan Firestore ki auto-generated Document ID hai
 
-    // If marking as waste, create a waste record
+    if (!id) {
+      return res.status(400).json({ message: 'Inventory Item ID is required' });
+    }
+
+    const itemRef = doc(db, 'inventory', id);
+
+    // 1. Agar item ko 'wasted' mark kiya ja raha hai, toh record copy karein
     if (updates.status === 'wasted') {
-      const item = await db.collection('inventory').findOne({ _id: new ObjectId(id) });
-      if (item) {
-        await db.collection('waste_records').insertOne({
+      const itemSnap = await getDoc(itemRef);
+      
+      if (itemSnap.exists()) {
+        const itemData = itemSnap.data();
+        
+        // waste_records collection mein entry karein
+        await addDoc(collection(db, 'waste_records'), {
           itemId: id,
-          itemName: item.name,
-          quantity: item.quantity,
-          unit: item.unit,
+          itemName: itemData.name,
+          quantity: itemData.quantity,
+          unit: itemData.unit,
           reason: updates.wasteReason || 'Expired',
-          wastedAt: new Date(),
-          originalExpiry: item.expiryDate
+          wastedAt: serverTimestamp(),
+          originalExpiry: itemData.expiryDate,
+          restaurantId: itemData.addedBy // Tracking ke liye
         });
       }
     }
 
-    const result = await db.collection('inventory').updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          ...updates,
-          lastUpdated: new Date()
-        }
-      }
-    );
+    // 2. Inventory document ko update karein
+    await updateDoc(itemRef, {
+      ...updates,
+      lastUpdated: serverTimestamp()
+    });
 
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ message: 'Item not found' });
-    }
-
-    res.status(200).json({ message: 'Item updated successfully' });
+    res.status(200).json({ message: 'Inventory item updated successfully in Firestore' });
   } catch (error) {
+    console.error("Update Inventory Error:", error);
     res.status(500).json({ error: error.message });
   }
 }

@@ -1,4 +1,5 @@
-import clientPromise from '../../lib/mongodb';
+import { db } from '../../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,35 +7,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('Received request body:', req.body);
     const { name, quantity, unit, category, expiryDate, barcode, location, addedBy } = req.body;
-    console.log('Parsed data:', { name, quantity, unit, category, expiryDate, barcode, location, addedBy });
-    
-    const client = await clientPromise;
-    const db = client.db('refoodify_db');
-    console.log('Connected to database');
 
-    const result = await db.collection('inventory').insertOne({
+    // Firestore mein data save karne ke liye addDoc ka use karein
+    const docRef = await addDoc(collection(db, 'inventory'), {
       name,
       quantity: parseFloat(quantity),
       unit,
       category,
-      expiryDate: expiryDate ? new Date(expiryDate) : null,
-      barcode,
-      location,
-      addedBy,
+      expiryDate: expiryDate ? new Date(expiryDate).toISOString() : null,
+      barcode: barcode || '',
+      location: location || '',
+      addedBy, // User UID (Restaurant owner)
       status: 'active',
-      createdAt: new Date(),
-      lastUpdated: new Date()
+      createdAt: serverTimestamp(),
+      lastUpdated: serverTimestamp()
     });
-    console.log('Insert result:', result);
 
     res.status(200).json({
-      message: 'Inventory item added successfully',
-      id: result.insertedId
+      message: 'Inventory item added successfully to Firestore',
+      id: docRef.id
     });
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Inventory API Error:', error);
     res.status(500).json({ error: error.message });
   }
 }

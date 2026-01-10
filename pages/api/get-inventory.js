@@ -1,4 +1,5 @@
-import clientPromise from '../../lib/mongodb';
+import { db } from '../../lib/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -6,28 +7,41 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('Connecting to MongoDB...');
-    const client = await clientPromise;
-    const db = client.db('refoodify_db');
-    console.log('Connected to database, fetching items...');
-
     const { uid } = req.query;
-    let query = { status: 'active' };
+    console.log('Fetching inventory for user:', uid);
+
+    const inventoryRef = collection(db, 'inventory');
+    let q;
+
+    // Filter logic: Agar uid hai toh sirf us restaurant ka data, warna sara active data
     if (uid) {
-      query.addedBy = uid;
+      q = query(
+        inventoryRef,
+        where("status", "==", "active"),
+        where("addedBy", "==", uid),
+        orderBy("createdAt", "desc")
+      );
+    } else {
+      q = query(
+        inventoryRef,
+        where("status", "==", "active"),
+        orderBy("createdAt", "desc")
+      );
     }
 
-    const items = await db.collection('inventory')
-      .find(query)
-      .sort({ createdAt: -1 })
-      .toArray();
+    const querySnapshot = await getDocs(q);
     
-    console.log('Fetched items:', items.length);
-    console.log('Sending response...');
+    // Data ko array mein map karein
+    const items = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    console.log(`Fetched ${items.length} inventory items from Firestore`);
     res.status(200).json(items);
-    console.log('Response sent successfully');
+    
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Firestore Inventory API Error:', error);
     res.status(500).json({ error: error.message });
   }
 }

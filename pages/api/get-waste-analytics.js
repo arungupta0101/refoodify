@@ -1,4 +1,5 @@
-import clientPromise from '../../lib/mongodb';
+import { db } from '../../lib/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -6,28 +7,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = await clientPromise;
-    const db = client.db('refoodify_db');
-
-    // Get waste records from last 30 days
+    // 1. Last 30 days ki date calculate karein
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const wasteRecords = await db.collection('waste_records')
-      .find({ wastedAt: { $gte: thirtyDaysAgo } })
-      .sort({ wastedAt: -1 })
-      .toArray();
+    // 2. Firestore Query (Waste Records fetch karne ke liye)
+    const wasteRef = collection(db, 'waste_records');
+    const q = query(
+      wasteRef, 
+      where('wastedAt', '>=', thirtyDaysAgo),
+      orderBy('wastedAt', 'desc')
+    );
 
-    // Calculate analytics
-    const totalWaste = wasteRecords.reduce((sum, record) => sum + record.quantity, 0);
+    const querySnapshot = await getDocs(q);
+    const wasteRecords = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      // Firestore timestamp ko JS date mein convert karein agar zaroori ho
+      wastedAt: doc.data().wastedAt?.toDate() 
+    }));
+
+    // 3. Analytics Calculation (Logic same rahega)
+    const totalWaste = wasteRecords.reduce((sum, record) => sum + Number(record.quantity || 0), 0);
+    
     const wasteByReason = wasteRecords.reduce((acc, record) => {
-      acc[record.reason] = (acc[record.reason] || 0) + record.quantity;
-      return acc;
-    }, {});
-
-    const wasteByCategory = wasteRecords.reduce((acc, record) => {
-      // This would need category info from the original item
-      // For now, we'll group by reason
+      const reason = record.reason || 'Unknown';
+      acc[reason] = (acc[reason] || 0) + Number(record.quantity || 0);
       return acc;
     }, {});
 
@@ -38,6 +43,7 @@ export default async function handler(req, res) {
       period: 'Last 30 days'
     });
   } catch (error) {
+    console.error("Waste Analysis Error:", error);
     res.status(500).json({ error: error.message });
   }
 }

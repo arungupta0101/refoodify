@@ -1,4 +1,5 @@
-import clientPromise from '../../lib/mongodb';
+import { db } from '../../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,16 +8,26 @@ export default async function handler(req, res) {
 
   try {
     const { uid } = req.query;
-    const client = await clientPromise;
-    const db = client.db('default');
 
-    const user = await db.collection('users').findOne({ _id: uid });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!uid) {
+      return res.status(400).json({ message: 'User UID (uid) is required' });
     }
 
-    res.status(200).json(user);
+    // Firestore mein document fetch karne ke liye doc reference ka use karein
+    // Humne 'users' collection mein UID ko hi Document ID banaya hai
+    const userDoc = await getDoc(doc(db, 'users', uid));
+
+    if (!userDoc.exists()) {
+      return res.status(404).json({ message: 'User profile not found in database' });
+    }
+
+    // Document data return karein (id, email, userType, points, name, etc.)
+    res.status(200).json({
+      uid: userDoc.id,
+      ...userDoc.data()
+    });
   } catch (error) {
+    console.error("Get User API Error:", error);
     res.status(500).json({ error: error.message });
   }
 }

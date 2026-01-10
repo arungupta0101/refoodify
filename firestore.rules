@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Rule: Agar user logged in hai, toh wo kisi bhi collection ko read/write kar sakta hai
+    // Refoodify ke testing phase ke liye ye best hai
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Specific Rule for Users: Sirf user apni profile edit kare (Optional but good)
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

@@ -1,4 +1,5 @@
-import clientPromise from '../../lib/mongodb';
+import { db } from '../../lib/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -6,87 +7,60 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = await clientPromise;
-    const db = client.db('refoodify_db');
-
-    // Get items expiring in next 3 days
+    const inventoryRef = collection(db, 'inventory');
+    
+    // Dates calculate karein (Next 3 days)
+    const now = new Date();
+    const todayStr = now.toISOString();
+    
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    const threeDaysStr = threeDaysFromNow.toISOString();
 
-    const expiringItems = await db.collection('inventory')
-      .find({
-        status: 'active',
-        expiryDate: {
-          $lte: threeDaysFromNow,
-          $gte: new Date()
-        }
-      })
-      .toArray();
+    // 1. Fetch items expiring in next 3 days from Firestore
+    const q = query(
+      inventoryRef,
+      where("status", "==", "active"),
+      where("expiryDate", "<=", threeDaysStr),
+      where("expiryDate", ">=", todayStr),
+      orderBy("expiryDate", "asc")
+    );
 
-    // Simple recipe suggestions based on item categories
-    const suggestions = [];
+    const querySnapshot = await getDocs(q);
+    const expiringItems = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    expiringItems.forEach(item => {
+    // 2. Recipe suggestions logic
+    const suggestions = expiringItems.map(item => {
       let recipes = [];
 
       switch (item.category?.toLowerCase()) {
         case 'vegetables':
-          recipes = [
-            'Vegetable Stir Fry',
-            'Vegetable Soup',
-            'Veggie Salad',
-            'Roasted Vegetables'
-          ];
+          recipes = ['Vegetable Stir Fry', 'Vegetable Soup', 'Veggie Salad', 'Roasted Vegetables'];
           break;
         case 'fruits':
-          recipes = [
-            'Fruit Salad',
-            'Smoothie',
-            'Fruit Compote',
-            'Baked Fruit Dessert'
-          ];
+          recipes = ['Fruit Salad', 'Smoothie', 'Fruit Compote', 'Baked Fruit Dessert'];
           break;
         case 'dairy':
-          recipes = [
-            'Cheese Omelette',
-            'Yogurt Parfait',
-            'Cream Soup',
-            'Cheese Sandwich'
-          ];
+          recipes = ['Cheese Omelette', 'Yogurt Parfait', 'Cream Soup', 'Cheese Sandwich'];
           break;
         case 'meat':
-          recipes = [
-            'Stir Fry',
-            'Curry',
-            'Stew',
-            'Sandwiches'
-          ];
+          recipes = ['Stir Fry', 'Curry', 'Stew', 'Sandwiches'];
           break;
         case 'grains':
-          recipes = [
-            'Rice Dishes',
-            'Pasta',
-            'Salad',
-            'Soup Base'
-          ];
+          recipes = ['Rice Dishes', 'Pasta', 'Salad', 'Soup Base'];
           break;
         default:
-          recipes = [
-            'Quick Stir Fry',
-            'Simple Salad',
-            'Soup',
-            'Sandwich Filling'
-          ];
+          recipes = ['Quick Stir Fry', 'Simple Salad', 'Soup', 'Sandwich Filling'];
       }
 
-      suggestions.push({
+      return {
         item: item.name,
         category: item.category,
         expiryDate: item.expiryDate,
         recipes: recipes,
         quantity: item.quantity,
         unit: item.unit
-      });
+      };
     });
 
     res.status(200).json({
@@ -94,6 +68,7 @@ export default async function handler(req, res) {
       totalItems: expiringItems.length
     });
   } catch (error) {
+    console.error("Recipe Suggestion Error:", error);
     res.status(500).json({ error: error.message });
   }
 }
