@@ -1,5 +1,5 @@
-import { db } from '../../lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import dbConnect from '../../lib/mongodb';
+import { Inventory } from '../../lib/models';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,33 +7,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    const inventoryRef = collection(db, 'inventory');
+    await dbConnect();
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
     
-    // Dates calculate karein (Next 3 days)
+    // Dates calculate karein (Next 7 days)
     const now = new Date();
-    const todayStr = now.toISOString();
+    const todayStr = now.toISOString().split('T')[0];
     
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-    const threeDaysStr = threeDaysFromNow.toISOString();
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const sevenDaysStr = sevenDaysFromNow.toISOString().split('T')[0];
 
-    // 1. Fetch items expiring in next 3 days from Firestore
-    const q = query(
-      inventoryRef,
-      where("status", "==", "active"),
-      where("expiryDate", "<=", threeDaysStr),
-      where("expiryDate", ">=", todayStr),
-      orderBy("expiryDate", "asc")
-    );
-
-    const querySnapshot = await getDocs(q);
-    const expiringItems = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // 1. Fetch items expiring soon from MongoDB
+    const expiringItems = await Inventory.find({
+      userId,
+      expiry: { $gte: todayStr, $lte: sevenDaysStr }
+    }).sort({ expiry: 1 });
 
     // 2. Recipe suggestions logic
     const suggestions = expiringItems.map(item => {
       let recipes = [];
+      const itemName = item.name.toLowerCase();
 
-      switch (item.category?.toLowerCase()) {
+      switch (true) {
         case 'vegetables':
           recipes = ['Vegetable Stir Fry', 'Vegetable Soup', 'Veggie Salad', 'Roasted Vegetables'];
           break;
@@ -49,14 +49,26 @@ export default async function handler(req, res) {
         case 'grains':
           recipes = ['Rice Dishes', 'Pasta', 'Salad', 'Soup Base'];
           break;
+        // Name based matching
+        case itemName.includes('milk'):
+          recipes = ['Rice Pudding', 'Milkshake', 'White Sauce Pasta'];
+          break;
+        case itemName.includes('bread'):
+          recipes = ['Bread Pudding', 'Croutons', 'French Toast'];
+          break;
+        case itemName.includes('tomato'):
+          recipes = ['Tomato Soup', 'Salsa', 'Pasta Sauce'];
+          break;
+        case itemName.includes('banana'):
+          recipes = ['Banana Bread', 'Smoothie', 'Pancakes'];
+          break;
         default:
           recipes = ['Quick Stir Fry', 'Simple Salad', 'Soup', 'Sandwich Filling'];
       }
 
       return {
         item: item.name,
-        category: item.category,
-        expiryDate: item.expiryDate,
+        expiryDate: item.expiry,
         recipes: recipes,
         quantity: item.quantity,
         unit: item.unit

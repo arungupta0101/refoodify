@@ -1,235 +1,241 @@
-import { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
+import Link from 'next/link';
+import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { FaGoogle, FaFacebook } from 'react-icons/fa';
+import { signIn } from "next-auth/react";
 
 export default function Login() {
-  const [authMethod, setAuthMethod] = useState('password'); // 'password' or 'emailLink'
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
-  const [userType, setUserType] = useState('user'); // user, donor, ngo
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showFacebookModal, setShowFacebookModal] = useState(false);
 
-  useEffect(() => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      let email = window.localStorage.getItem('emailForSignIn');
-      if (!email) {
-        email = window.prompt('Please provide your email for confirmation');
-      }
-      signInWithEmailLink(auth, email, window.location.href)
-        .then(async (result) => {
-          const response = await fetch('/api/create-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              uid: result.user.uid,
-              email,
-              userType: window.localStorage.getItem('userType') || 'user',
-            }),
-          });
-          
-          window.localStorage.removeItem('emailForSignIn');
-          window.localStorage.removeItem('userType');
-          toast.success('Successfully signed in!');
-          router.push('/profile');
-        })
-        .catch((error) => {
-          toast.error('Sign-in failed: ' + error.message);
-        });
-    }
-  }, []);
-
-  const handlePasswordSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // --- HARDCODED ADMIN CHECK ---
-    if (email === 'arunjacker0101@gmail.com' && password === 'Arun@12345') {
-      toast.success('Welcome Admin, Arun!');
-      localStorage.setItem('isAdmin', 'true'); // Store admin session
-      router.push('/admin-dashboard');
-      return;
-    }
-
+    setIsLoading(true);
     try {
-      if (isRegister) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const response = await fetch('/api/create-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            uid: userCredential.user.uid,
-            email,
-            userType,
-          }),
-        });
-        
-        if (!response.ok) throw new Error('Failed to create user');
-        toast.success('Account created successfully!');
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        toast.success('Logged in successfully!');
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server error: API endpoint not found or returned non-JSON");
       }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      
+      // Check for Admin Access (Strict check for specific credentials)
+      if (email === 'admin@refoodify.com' && password === 'RefoodifyAdmin@2024!') {
+        localStorage.setItem('isAdmin', 'true');
+      } else {
+        localStorage.removeItem('isAdmin');
+      }
+
+      login(data.user);
+      toast.success('Logged in successfully!');
       router.push('/profile');
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleEmailLinkSubmit = async (e) => {
-    e.preventDefault();
-    const actionCodeSettings = {
-      url: 'http://localhost:3000/login',
-      handleCodeInApp: true,
-    };
-    try {
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
-      window.localStorage.setItem('userType', userType);
-      toast.success('Sign-in link sent to your email!');
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email) {
-      toast.error('Please enter your email first');
+  const handleSocialLogin = (provider) => {
+    if (provider === 'Facebook') {
+      setShowFacebookModal(true);
       return;
     }
-    try {
-      const response = await fetch(`/api/check-user?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-      
-      if (!data.exists) {
-        toast.error('Account not found. Please register first.');
-        return;
-      }
-      
-      await sendPasswordResetEmail(auth, email);
-      toast.success('Password reset email sent!');
-    } catch (error) {
-      toast.error('Error: ' + error.message);
-    }
+    signIn(provider.toLowerCase(), { callbackUrl: '/profile' });
   };
 
   return (
     <>
-      <Header />
-      <main className="py-12 px-4 max-w-md mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center text-primary">Refoodify Portal</h1>
+    <Header />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-orange-50 to-green-100 relative overflow-hidden">
+      {/* Decorative Blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-32 left-20 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 
-        {/* Auth Method Toggle */}
-        <div className="flex mb-6 bg-gray-100 rounded-xl p-1 shadow-inner">
-          <button
-            onClick={() => setAuthMethod('password')}
-            className={`flex-1 py-2 px-4 rounded-lg transition-all ${authMethod === 'password' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary'}`}
-          >
-            Password
-          </button>
-          <button
-            onClick={() => setAuthMethod('emailLink')}
-            className={`flex-1 py-2 px-4 rounded-lg transition-all ${authMethod === 'emailLink' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:text-primary'}`}
-          >
-            Email Link
-          </button>
-        </div>
-
-        {authMethod === 'password' ? (
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 animate-fadeIn">
-            <h2 className="text-xl font-semibold mb-6 text-center text-gray-800">
-              {isRegister ? 'Join Refoodify' : 'Welcome Back'}
-            </h2>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
-                required
-              />
-              {isRegister && (
-                <select
-                  value={userType}
-                  onChange={(e) => setUserType(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all bg-white"
-                >
-                  <option value="user">Individual User</option>
-                  <option value="donor">Food Donor / Restaurant</option>
-                  <option value="ngo">NGO / Charity</option>
-                </select>
-              )}
-              <button type="submit" className="w-full bg-primary text-white p-3 rounded-xl font-bold shadow-lg hover:bg-opacity-90 transform active:scale-95 transition-all">
-                {isRegister ? 'Register' : 'Login'}
-              </button>
-            </form>
-            <div className="mt-6 text-center space-y-3">
-              <button onClick={() => setIsRegister(!isRegister)} className="text-sm text-primary hover:underline font-medium">
-                {isRegister ? 'Already have an account? Sign In' : 'New to Refoodify? Create an account'}
-              </button>
-              {!isRegister && (
-                <div>
-                  <button onClick={handleForgotPassword} className="text-xs text-gray-400 hover:text-gray-600">
-                    Forgot Password?
-                  </button>
-                </div>
-              )}
+      <div className="max-w-4xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row m-4 z-10 relative">
+        
+        {/* Left Side - Image/Branding */}
+        <div className="md:w-1/2 bg-gradient-to-br from-primary to-green-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-20"></div>
+          <div className="relative z-10">
+            <Link href="/" className="text-3xl font-black tracking-tight flex items-center gap-2">
+              <span>🌱</span> Refoodify
+            </Link>
+            <div className="mt-12">
+              <h2 className="text-4xl font-bold mb-4">Welcome Back!</h2>
+              <p className="text-green-100 text-lg leading-relaxed">
+                Join our mission to reduce food waste and feed the hungry. Every login brings us closer to a hunger-free world.
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 animate-fadeIn">
-            <h2 className="text-xl font-semibold mb-6 text-center text-gray-800">Magic Link Sign-In</h2>
-            <form onSubmit={handleEmailLinkSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
-                required
-              />
-              <select
-                value={userType}
-                onChange={(e) => setUserType(e.target.value)}
-                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all bg-white"
-              >
-                <option value="user">User</option>
-                <option value="donor">Donor</option>
-                <option value="ngo">NGO</option>
-              </select>
-              <button type="submit" className="w-full bg-primary text-white p-3 rounded-xl font-bold shadow-lg">
-                Send Magic Link
-              </button>
-            </form>
-            <p className="text-center mt-6 text-xs text-gray-400 leading-relaxed">
-              We'll send a link to your inbox that logs you in automatically. No password needed!
+          <div className="relative z-10 mt-12">
+            <p className="text-sm text-green-200">© 2024 Refoodify Inc.</p>
+          </div>
+        </div>
+
+        {/* Right Side - Form */}
+        <div className="md:w-1/2 p-8 md:p-12 bg-white flex flex-col justify-center">
+          <div className="text-center md:text-left mb-8">
+            <h3 className="text-2xl font-bold text-gray-800">Sign In</h3>
+            <p className="text-gray-500 mt-2">Please enter your details to continue.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-600 ml-1">Email Address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-100 rounded-xl focus:border-primary focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium text-gray-700 bg-gray-50 focus:bg-white"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-600 ml-1">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <LockClosedIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-100 rounded-xl focus:border-primary focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium text-gray-700 bg-gray-50 focus:bg-white"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+              </div>
+              <div className="flex justify-end">
+                <a href="#" className="text-xs font-bold text-primary hover:text-green-700">Forgot Password?</a>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-primary to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => handleSocialLogin('Google')}
+              className="flex items-center justify-center gap-2 w-full p-3 border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-200 transition-all group"
+            >
+              <FaGoogle className="text-red-500 text-xl group-hover:scale-110 transition-transform" />
+              <span>Google</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin('Facebook')}
+              className="flex items-center justify-center gap-2 w-full p-3 border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-200 transition-all group"
+            >
+              <FaFacebook className="text-blue-600 text-xl group-hover:scale-110 transition-transform" />
+              <span>Facebook</span>
+            </button>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-gray-500 font-medium">
+              Don't have an account?{' '}
+              <Link href="/signup" className="text-primary font-bold hover:underline">
+                Create Account
+              </Link>
             </p>
           </div>
-        )}
-      </main>
+        </div>
+      </div>
+
+      {/* Facebook Coming Soon Modal */}
+      {showFacebookModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowFacebookModal(false)}>
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounceIn relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowFacebookModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <FaFacebook className="text-blue-600 text-5xl" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-800 mb-2">Coming Soon! 🚀</h3>
+            <p className="text-gray-500 mb-8 leading-relaxed">
+              We are putting the finishing touches on Facebook Login. It will be available in the next update!
+            </p>
+            <button 
+              onClick={() => setShowFacebookModal(false)} 
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] transition-all"
+            >
+              Okay, I'll wait!
+            </button>
+          </div>
+        </div>
+      )}
       
       <style jsx>{`
-        .animate-fadeIn {
-          animation: fadeIn 0.4s ease-out;
+        .animate-blob {
+          animation: blob 7s infinite;
         }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        @keyframes bounceIn {
+          0% { opacity: 0; transform: scale(0.3); }
+          50% { opacity: 1; transform: scale(1.05); }
+          70% { transform: scale(0.9); }
+          100% { transform: scale(1); }
+        }
+        .animate-bounceIn {
+          animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
       `}</style>
-      <Footer />
+    </div>
     </>
   );
 }

@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { motion } from 'framer-motion';
-import { FaInstagram, FaLinkedin, FaGithub, FaTwitter } from 'react-icons/fa';
+import { FaInstagram, FaLinkedin, FaGithub, FaTwitter, FaLeaf, FaUsers, FaLightbulb, FaHandHoldingHeart } from 'react-icons/fa';
 
 const teamMembers = [
   {
@@ -36,10 +37,30 @@ const teamMembers = [
       linkedin: 'https://linkedin.com/in/shreya_dummy',
       github: 'https://github.com/shreya_dummy'
     }
+  },
+  {
+    name: 'Harshit Dwivedi',
+    role: 'Creative Strategist',
+    bio: 'Harshit is the creative strategist with a smart mind who always has a plan. He plays a pivotal role in marketing and fostering creative thinking within the team.',
+    image: '/team/harshit.jpeg',
+    social: {
+      instagram: 'https://instagram.com/harshit_dummy',
+      linkedin: 'https://linkedin.com/in/harshit_dummy',
+      github: 'https://github.com/harshit_dummy'
+    }
   }
 ];
 
+const coreValues = [
+  { icon: <FaLeaf />, title: "Sustainability", desc: "Committed to a zero-waste future." },
+  { icon: <FaUsers />, title: "Community", desc: "Building strong local networks." },
+  { icon: <FaLightbulb />, title: "Innovation", desc: "Smart tech for social good." },
+  { icon: <FaHandHoldingHeart />, title: "Empathy", desc: "Driven by compassion for all." },
+];
+
 export default function About() {
+  const [selectedImage, setSelectedImage] = useState(null);
+
   return (
     <>
       <Header />
@@ -90,6 +111,26 @@ export default function About() {
           </div>
         </section>
 
+        {/* Core Values Section */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Our Core Values</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {coreValues.map((val, i) => (
+                <motion.div 
+                  key={i}
+                  whileHover={{ y: -10 }}
+                  className="p-6 bg-gray-50 rounded-2xl text-center border border-gray-100 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="text-4xl text-primary mb-4 flex justify-center">{val.icon}</div>
+                  <h3 className="font-bold text-xl mb-2">{val.title}</h3>
+                  <p className="text-gray-600 text-sm">{val.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Team Section with Scroll Animations */}
         <section className="max-w-4xl mx-auto py-16 px-4">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800 underline decoration-primary underline-offset-8">Meet Our Team</h2>
@@ -105,7 +146,7 @@ export default function About() {
                 className={`flex flex-col md:flex-row items-center gap-10 ${index % 2 !== 0 ? 'md:flex-row-reverse' : ''}`}
               >
                 {/* Profile Image */}
-                <div className="w-64 h-64 flex-shrink-0 relative group">
+                <div className="w-64 h-64 flex-shrink-0 relative group cursor-pointer" onClick={() => setSelectedImage(member.image)}>
                   <div className="absolute inset-0 bg-primary rounded-3xl rotate-6 group-hover:rotate-0 transition-transform duration-300"></div>
                   <img 
                     src={member.image} 
@@ -134,6 +175,31 @@ export default function About() {
             ))}
           </div>
         </section>
+
+        {/* Join Team Section */}
+        <section className="py-20 bg-gradient-to-r from-primary to-green-600 text-white text-center px-4">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold mb-6">Join Our Mission</h2>
+            <p className="text-xl mb-8 opacity-90">We are always looking for passionate individuals to help us fight hunger and food waste. Are you ready to make an impact?</p>
+            <a href="mailto:careers@refoodify.com" className="inline-block bg-white text-primary px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-gray-100 transition-transform transform hover:scale-105">
+              Become a Volunteer
+            </a>
+          </div>
+        </section>
+
+        {/* Image Modal */}
+        {selectedImage && (
+          <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
+            <motion.img 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              src={selectedImage} 
+              className="max-w-full max-h-[90vh] rounded-xl shadow-2xl" 
+              alt="Full View"
+            />
+            <button className="absolute top-8 right-8 text-white text-4xl font-bold">&times;</button>
+          </div>
+        )}
       </main>
       <Footer />
     </>

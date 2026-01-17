@@ -3,13 +3,38 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 import { UsersIcon, HeartIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
 import DevPopup from '../components/DevPopup'; // Popup Component Import kiya
 
 export default function Home() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ meals: 0, donors: 0, ngos: 0 });
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.meals !== undefined) setStats(data);
+      })
+      .catch(err => console.error("Failed to fetch stats", err));
+
+    // Daily Check-in Logic
+    if (user) {
+      fetch('/api/user/daily-checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.pointsAdded > 0) toast.success(data.message, { icon: '🌟' });
+      });
+    }
+  }, []);
 
   const handleSOS = () => {
     if (navigator.geolocation) {
@@ -99,17 +124,17 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="group bg-gradient-to-br from-white to-lightGreen p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500">
                 <HeartIcon className="h-16 w-16 text-primary mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="text-5xl font-bold text-primary mb-3">10,000+</h3>
+                <h3 className="text-5xl font-bold text-primary mb-3">{stats.meals}</h3>
                 <p className="text-gray-600 font-medium">Meals Delivered</p>
               </div>
               <div className="group bg-gradient-to-br from-white to-lightOrange p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500">
                 <UsersIcon className="h-16 w-16 text-warm mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="text-5xl font-bold text-warm mb-3">500+</h3>
+                <h3 className="text-5xl font-bold text-warm mb-3">{stats.donors}</h3>
                 <p className="text-gray-600 font-medium">Active Donors</p>
               </div>
               <div className="group bg-gradient-to-br from-white to-blue-50 p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500">
                 <BuildingStorefrontIcon className="h-16 w-16 text-info mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="text-5xl font-bold text-info mb-3">200+</h3>
+                <h3 className="text-5xl font-bold text-info mb-3">{stats.ngos}</h3>
                 <p className="text-gray-600 font-medium">Partnered NGOs</p>
               </div>
             </div>
@@ -150,7 +175,7 @@ export default function Home() {
                 <div className="flex items-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-2xl">👨‍🍳</div>
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800">Marcus Johnson</p>
+                    <p className="font-bold text-gray-800">Harshit Diwedi</p>
                     <p className="text-xs text-primary font-bold">Restaurant Owner</p>
                   </div>
                 </div>
@@ -161,7 +186,7 @@ export default function Home() {
                 <div className="flex items-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-warm/20 flex items-center justify-center text-2xl">🤝</div>
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800">Sarah Chen</p>
+                    <p className="font-bold text-gray-800">Beauty Mishra</p>
                     <p className="text-xs text-warm font-bold">NGO Volunteer</p>
                   </div>
                 </div>
@@ -172,7 +197,7 @@ export default function Home() {
                 <div className="flex items-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-info/20 flex items-center justify-center text-2xl">🏢</div>
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800">David Rodriguez</p>
+                    <p className="font-bold text-gray-800">Nilesh Prajapati</p>
                     <p className="text-xs text-info font-bold">Hotel Manager</p>
                   </div>
                 </div>

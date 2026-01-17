@@ -1,5 +1,5 @@
-import { db } from '../../lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import dbConnect from '../../lib/mongodb';
+import { Donation } from '../../lib/models';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,25 +7,30 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Reference to the 'donations' collection
-    const donationsRef = collection(db, 'donations');
+    await dbConnect();
+    
+    // Auto-delete pending donations older than 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await Donation.deleteMany({
+      status: 'pending',
+      createdAt: { $lt: twentyFourHoursAgo }
+    });
 
-    // 2. Query for available donations, ordered by newest first
-    const q = query(
-      donationsRef, 
-      where("status", "==", "available"),
-      orderBy("createdAt", "desc")
-    );
+    // Fetch available donations (status 'pending' or 'available')
+    const donations = await Donation.find({ 
+      status: { $in: ['pending', 'available'] } 
+    }).sort({ createdAt: -1 });
 
-    const querySnapshot = await getDocs(q);
+    // Map _id to id for frontend compatibility
+    const formattedDonations = donations.map(doc => {
+      const obj = doc.toObject();
+      return {
+        ...obj,
+        id: obj._id.toString()
+      };
+    });
 
-    // 3. Map the documents into an array
-    const donations = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    res.status(200).json(donations);
+    res.status(200).json(formattedDonations);
   } catch (error) {
     console.error("Get Available Donations Error:", error);
     res.status(500).json({ error: error.message });

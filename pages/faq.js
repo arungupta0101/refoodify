@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db, storage } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
@@ -33,27 +30,21 @@ const handleManualSubmit = async (e) => {
     try {
       let screenshotUrl = "";
 
-      // 1. Screenshot Upload Logic (with error check)
       if (screenshot) {
-        try {
-          const storageRef = ref(storage, `bugs/${Date.now()}_${screenshot.name}`);
-          const uploadTask = await uploadBytes(storageRef, screenshot);
-          screenshotUrl = await getDownloadURL(uploadTask.ref);
-        } catch (storageErr) {
-          console.error("Storage Error:", storageErr);
-          toast.error("Failed to upload screenshot, but sending text...");
-        }
+        const reader = new FileReader();
+        reader.readAsDataURL(screenshot);
+        await new Promise((resolve) => {
+          reader.onloadend = () => {
+            screenshotUrl = reader.result;
+            resolve();
+          };
+        });
       }
 
-      // 2. Save to Firestore
-      await addDoc(collection(db, "faqs"), {
-        userId: user?.uid || 'anonymous',
-        userEmail: user?.email || 'not provided',
-        description: bugDescription,
-        screenshot: screenshotUrl,
-        status: 'pending',
-        type: 'bug_report',
-        createdAt: serverTimestamp(), // Make sure serverTimestamp is imported from 'firebase/firestore'
+      await fetch('/api/faqs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: bugDescription, userEmail: user?.email, userId: user?.uid, screenshot: screenshotUrl })
       });
 
       toast.success("Report sent to Admin!", { id: loadingToast });

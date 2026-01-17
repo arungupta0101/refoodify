@@ -1,17 +1,16 @@
-// import '../styles/globals.css';
-// import { Toaster } from 'react-hot-toast';
-// import { AuthProvider } from '../contexts/AuthContext';
-
 import '../styles/globals.css';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../contexts/AuthContext';
+import { SessionProvider } from "next-auth/react"
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
-    <AuthProvider>
-      <Component {...pageProps} />
-      <Toaster position="top-right" />
-    </AuthProvider>
+    <SessionProvider session={session}>
+      <AuthProvider>
+        <Component {...pageProps} />
+        <Toaster position="top-right" />
+      </AuthProvider>
+    </SessionProvider>
   );
 }
 
