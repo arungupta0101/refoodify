@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { MapPinIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon, SunIcon, MoonIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -11,6 +11,27 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileDropdown, setMobileDropdown] = useState(null);
   const router = useRouter();
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const mainLinks = [
     { name: 'Donate', path: '/donate' },
@@ -106,6 +127,13 @@ export default function Header() {
 
           {/* Right Icons & Hamburger */}
           <div className="flex items-center space-x-4">
+            {/* Install App Button (Visible only if installable) */}
+            {deferredPrompt && (
+              <button onClick={handleInstallClick} className="hidden lg:flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all border border-white/30">
+                <ArrowDownTrayIcon className="h-4 w-4" /> Install App
+              </button>
+            )}
+
             {/* Theme Toggle */}
             <button onClick={toggleTheme} className="text-white hover:text-light transition duration-300 p-1" aria-label="Toggle Dark Mode">
               {theme === 'dark' ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
@@ -144,6 +172,13 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white shadow-xl border-t border-gray-100 animate-fadeIn absolute w-full left-0 top-full max-h-[90vh] overflow-y-auto">
           <div className="px-4 pt-4 pb-6 space-y-2">
+            
+            {/* Mobile Install Button */}
+            {deferredPrompt && (
+              <button onClick={handleInstallClick} className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl font-bold mb-4 border border-green-200">
+                <ArrowDownTrayIcon className="h-5 w-5" /> Install Refoodify App
+              </button>
+            )}
             
             {/* Main Links Mobile */}
             {mainLinks.map((link) => (
