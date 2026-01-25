@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { MapPinIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mobileDropdown, setMobileDropdown] = useState(null);
   const router = useRouter();
@@ -50,7 +52,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-gradient-to-r from-primary to-secondary shadow-lg sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+    <header className="bg-gradient-to-r from-primary to-secondary dark:from-gray-900 dark:to-gray-800 shadow-lg sticky top-0 z-50 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           
@@ -99,6 +101,11 @@ export default function Header() {
 
           {/* Right Icons & Hamburger */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <button onClick={toggleTheme} className="text-white hover:text-light transition duration-300 p-1" aria-label="Toggle Dark Mode">
+              {theme === 'dark' ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
+            </button>
+
             {/* Profile Link (Desktop) */}
             <Link href="/profile" className="hidden lg:block text-white hover:text-light transition duration-300" title="Profile">
               <UserCircleIcon className="h-7 w-7" />

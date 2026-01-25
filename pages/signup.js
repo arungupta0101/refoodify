@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/router';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { EnvelopeIcon, LockClosedIcon, UserIcon, BuildingStorefrontIcon, HeartIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, UserIcon, BuildingStorefrontIcon, HeartIcon, UserGroupIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Header from '../components/Header';
 import { FaGoogle, FaFacebook } from 'react-icons/fa';
 import { signIn } from "next-auth/react";
@@ -12,6 +12,7 @@ export default function Signup() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('user');
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -168,14 +169,25 @@ export default function Signup() {
                   <LockClosedIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-100 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-700 bg-gray-50 focus:bg-white"
+                  className="w-full pl-10 pr-10 py-3 border-2 border-gray-100 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-700 bg-gray-50 focus:bg-white"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
               </div>
               <p className="text-xs text-gray-400 mt-1 ml-1">Must be at least 6 characters</p>
             </div>

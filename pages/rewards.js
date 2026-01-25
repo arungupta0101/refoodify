@@ -128,7 +128,7 @@ export default function Rewards() {
   useEffect(() => {
     if (user) {
       fetch(`/api/user/profile?uid=${user.uid}`).then(res => res.json()).then(data => {
-        setPoints(data.points || 0);
+        setPoints(Number(data.points) || 0);
         setUserType(data.userType || 'user');
       });
     }

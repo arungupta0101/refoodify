@@ -85,7 +85,7 @@ export default function Profile() {
       const currentUserType = profileData?.userType || user.userType;
 
       if (currentUserType === 'ngo') {
-        const availRes = await fetch('/api/get-available-donations');
+        const availRes = await fetch(`/api/get-available-donations?ngoId=${user.uid}`);
         if (availRes.ok) {
           const allDonations = await availRes.json();
           // Simple filter: Check if donation location contains user's city/address keywords
@@ -351,17 +351,63 @@ export default function Profile() {
     } catch (e) { toast.error('Failed to redeem'); }
   };
 
+  const handleIgnoreDonation = async (donationId) => {
+    if (!confirm("Are you sure you want to ignore this request? It will be removed from your list.")) return;
+    try {
+      await fetch('/api/ignore-donation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ donationId, ngoId: user.uid })
+      });
+      setNearbyDonations(prev => prev.filter(d => d.id !== donationId && d._id !== donationId));
+      toast.success("Request removed.");
+    } catch (e) { toast.error("Failed to ignore"); }
+  };
+
+  const handleBookDonation = async (donationId) => {
+    try {
+      const res = await fetch('/api/book-donation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ donationId, ngoId: user.uid })
+      });
+      const data = await res.json();
+      if (res.ok) { toast.success(data.message); fetchProfile(); }
+      else { toast.error(data.message); }
+    } catch (e) { toast.error("Booking failed"); }
+  };
+
   if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
   if (!user) return null;
 
   const displayProfile = profile || user || {};
   const userType = displayProfile.userType || 'user';
 
-  // Simple Level Calc for Profile View
-  const points = displayProfile.points || 0;
-  const nextLevel = points < 500 ? 500 : points < 1500 ? 1500 : 3000;
-  const progress = Math.min((points / nextLevel) * 100, 100);
-  const levelName = points >= 3000 ? 'Gold' : points >= 1500 ? 'Silver' : points >= 500 ? 'Bronze' : 'Starter';
+  // Robust Level Calculation
+  const points = Number(displayProfile.points) || 0;
+  
+  const getLevelInfo = (pts, type) => {
+    if (type === 'ngo') {
+      if (pts >= 4000) return { name: 'Gold', next: 10000 };
+      if (pts >= 2000) return { name: 'Silver', next: 4000 };
+      if (pts >= 800) return { name: 'Bronze', next: 2000 };
+      return { name: 'Starter', next: 800 };
+    } else if (type === 'restaurant') {
+      if (pts >= 3000) return { name: 'Gold', next: 10000 };
+      if (pts >= 1500) return { name: 'Silver', next: 3000 };
+      if (pts >= 500) return { name: 'Bronze', next: 1500 };
+      return { name: 'New', next: 500 };
+    } else {
+      if (pts >= 3000) return { name: 'Gold', next: 10000 };
+      if (pts >= 1500) return { name: 'Silver', next: 3000 };
+      if (pts >= 500) return { name: 'Bronze', next: 1500 };
+      return { name: 'New', next: 500 };
+    }
+  };
+
+  const levelInfo = getLevelInfo(points, userType);
+  const levelName = levelInfo.name;
+  const progress = Math.min((points / levelInfo.next) * 100, 100);
   
   // Generate Referral Code if missing (Simple logic for display)
   const myReferralCode = displayProfile.referralCode || (displayProfile.name ? displayProfile.name.substring(0, 4).toUpperCase() + Math.floor(Math.random() * 1000) : 'USER123');
@@ -693,8 +739,17 @@ export default function Profile() {
                               <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">Available</span>
                             </div>
                             <div className="flex gap-3 mt-3">
-                              <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(donation.location)}`} target="_blank" rel="noreferrer" className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl text-sm font-bold text-center hover:bg-blue-100">📍 Navigate</a>
-                              <button onClick={() => setVerifyModal(donation)} className="flex-1 bg-green-500 text-white py-2 rounded-xl text-sm font-bold hover:bg-green-600">Pickup & Verify</button>
+                              {donation.status === 'accepted' && donation.ngoId === user.uid ? (
+                                <>
+                                  <button onClick={() => router.push(`/chat?withUser=${donation.donorId}&name=${donation.donorName || 'Restaurant'}`)} className="flex-1 bg-blue-500 text-white py-2 rounded-xl text-sm font-bold hover:bg-blue-600">💬 Chat</button>
+                                  <button onClick={() => setVerifyModal(donation)} className="flex-1 bg-green-500 text-white py-2 rounded-xl text-sm font-bold hover:bg-green-600">Verify Pickup</button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => handleBookDonation(donation.id || donation._id)} className="flex-1 bg-primary text-white py-2 rounded-xl text-sm font-bold hover:bg-green-600 shadow-md">Accept & Book</button>
+                                  <button onClick={() => handleIgnoreDonation(donation.id || donation._id)} className="bg-gray-200 text-gray-600 px-3 py-2 rounded-xl text-sm font-bold hover:bg-gray-300" title="Ignore Request">✕</button>
+                                </>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -719,6 +774,15 @@ export default function Profile() {
                             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${d.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                               {d.status || 'Pending'}
                             </span>
+                            {d.status === 'accepted' && (
+                                <button 
+                                  onClick={() => d.ngoId ? router.push(`/chat?withUser=${d.ngoId}&name=${d.ngoName || 'NGO'}`) : toast.error("NGO details syncing...")} 
+                                  className="bg-blue-100 text-blue-600 p-2 rounded-full hover:bg-blue-200 transition-colors" 
+                                  title="Chat with NGO"
+                                >
+                                  💬
+                                </button>
+                            )}
                             {d.status === 'pending' && (
                               <>
                                 <button onClick={() => handleRefreshStatus(d._id || d.id)} className="text-blue-500 hover:bg-blue-50 p-1 rounded-full mr-1" title="Refresh Status">

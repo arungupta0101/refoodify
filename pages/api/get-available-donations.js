@@ -1,5 +1,5 @@
 import dbConnect from '../../lib/mongodb';
-import { Donation } from '../../lib/models';
+import { Donation, User } from '../../lib/models';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -8,27 +8,44 @@ export default async function handler(req, res) {
 
   try {
     await dbConnect();
+    const { ngoId } = req.query;
     
-    // Auto-delete pending donations older than 24 hours
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Auto-delete pending/available donations older than 12 hours
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
     await Donation.deleteMany({
-      status: 'pending',
-      createdAt: { $lt: twentyFourHoursAgo }
+      status: { $in: ['pending', 'available'] },
+      createdAt: { $lt: twelveHoursAgo }
     });
 
-    // Fetch available donations (status 'pending' or 'available')
-    const donations = await Donation.find({ 
-      status: { $in: ['pending', 'available'] } 
-    }).sort({ createdAt: -1 });
+    // Fetch available donations
+    let query = { 
+      $or: [
+        { status: { $in: ['pending', 'available'] } },
+        { status: 'accepted', ngoId: ngoId } // Show accepted ones only to the NGO who accepted them
+      ]
+    };
+    
+    // Filter out donations ignored by this NGO
+    if (ngoId) {
+      query.ignoredBy = { $ne: ngoId };
+    }
+
+    const donations = await Donation.find(query).sort({ createdAt: -1 });
 
     // Map _id to id for frontend compatibility
-    const formattedDonations = donations.map(doc => {
+    const formattedDonations = await Promise.all(donations.map(async doc => {
       const obj = doc.toObject();
+      let donorName = 'Restaurant';
+      if (obj.donorId) {
+        const donor = await User.findById(obj.donorId);
+        if (donor) donorName = donor.organizationName || donor.name || 'Restaurant';
+      }
       return {
         ...obj,
-        id: obj._id.toString()
+        id: obj._id.toString(),
+        donorName
       };
-    });
+    }));
 
     res.status(200).json(formattedDonations);
   } catch (error) {

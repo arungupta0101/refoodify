@@ -11,7 +11,12 @@ export default async function handler(req, res) {
     const donation = await Donation.findById(donationId);
     if (!donation) return res.status(404).json({ message: 'Donation not found' });
 
-    donation.donorRating = Number(rating);
+    // Prevent duplicate rating
+    if (donation.donorRating) {
+      return res.status(400).json({ message: 'You have already rated this donation' });
+    }
+
+    donation.donorRating = Math.min(Math.max(Number(rating), 1), 5); // Ensure 1-5
     donation.donorReview = review;
     await donation.save();
 
@@ -21,7 +26,7 @@ export default async function handler(req, res) {
       if (ngo) {
         const currentRating = Number(ngo.rating) || 0;
         const currentCount = Number(ngo.ratingCount) || 0;
-        const submittedRating = Number(rating);
+        const submittedRating = Math.min(Math.max(Number(rating), 1), 5);
         
         const newRating = ((currentRating * currentCount) + submittedRating) / (currentCount + 1);
         

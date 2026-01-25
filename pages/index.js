@@ -68,7 +68,7 @@ export default function Home() {
 
       <Header />
       
-      <main className="min-h-screen bg-gradient-to-br from-lightGreen via-white to-lightOrange relative overflow-hidden">
+      <main className="min-h-screen bg-gradient-to-br from-lightGreen via-white to-lightOrange dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden transition-colors duration-300">
         {/* Background Pattern */}
         <div className="absolute inset-0 pattern-dots opacity-5"></div>
         
@@ -85,7 +85,7 @@ export default function Home() {
             <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-8 fade-in leading-tight">
               From Surplus to Service — Save Food, Save Lives.
             </h1>
-            <p className="text-xl md:text-3xl text-gray-700 mb-12 leading-relaxed max-w-4xl mx-auto slide-in-left">
+            <p className="text-xl md:text-3xl text-gray-700 dark:text-gray-200 mb-12 leading-relaxed max-w-4xl mx-auto slide-in-left">
               Refoodify connects restaurants, hotels, and households with NGOs to donate surplus food and manage inventory smartly.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8 mb-12">
@@ -114,50 +114,50 @@ export default function Home() {
         </section>
 
         {/* Statistics Section */}
-        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white relative">
-          <div className="absolute inset-0 pattern-grid opacity-5"></div>
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800 relative transition-colors duration-300">
+          <div className="absolute inset-0 pattern-grid opacity-5 dark:opacity-10"></div>
           <div className="relative max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Real-Time Impact</h2>
-              <p className="text-xl text-gray-600">Connecting Gorakhpur and beyond through kindness.</p>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4">Real-Time Impact</h2>
+              <p className="text-xl text-gray-600 dark:text-gray-300">Connecting Gorakhpur and beyond through kindness.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              <div className="group bg-gradient-to-br from-white to-lightGreen p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500">
+              <div className="group bg-gradient-to-br from-white to-lightGreen dark:from-gray-700 dark:to-gray-600 p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-600 hover:shadow-2xl transition-all duration-500">
                 <HeartIcon className="h-16 w-16 text-primary mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="text-5xl font-bold text-primary mb-3">{stats.meals}</h3>
-                <p className="text-gray-600 font-medium">Meals Delivered</p>
+                <h3 className="text-5xl font-bold text-primary dark:text-green-400 mb-3">{stats.meals}</h3>
+                <p className="text-gray-600 dark:text-gray-200 font-medium">Meals Delivered</p>
               </div>
-              <div className="group bg-gradient-to-br from-white to-lightOrange p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500">
+              <div className="group bg-gradient-to-br from-white to-lightOrange dark:from-gray-700 dark:to-gray-600 p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-600 hover:shadow-2xl transition-all duration-500">
                 <UsersIcon className="h-16 w-16 text-warm mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="text-5xl font-bold text-warm mb-3">{stats.donors}</h3>
-                <p className="text-gray-600 font-medium">Active Donors</p>
+                <h3 className="text-5xl font-bold text-warm dark:text-orange-400 mb-3">{stats.donors}</h3>
+                <p className="text-gray-600 dark:text-gray-200 font-medium">Active Donors</p>
               </div>
-              <div className="group bg-gradient-to-br from-white to-blue-50 p-10 rounded-3xl shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-500">
+              <div className="group bg-gradient-to-br from-white to-blue-50 dark:from-gray-700 dark:to-gray-600 p-10 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-600 hover:shadow-2xl transition-all duration-500">
                 <BuildingStorefrontIcon className="h-16 w-16 text-info mx-auto mb-6 group-hover:scale-110 transition-transform" />
-                <h3 className="text-5xl font-bold text-info mb-3">{stats.ngos}</h3>
-                <p className="text-gray-600 font-medium">Partnered NGOs</p>
+                <h3 className="text-5xl font-bold text-info dark:text-blue-400 mb-3">{stats.ngos}</h3>
+                <p className="text-gray-600 dark:text-gray-200 font-medium">Partnered NGOs</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Awareness Section */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
           <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-8">Why Refoodify Matters?</h2>
-            <p className="text-xl text-gray-600 mb-12 max-w-4xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-8">Why Refoodify Matters?</h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-4xl mx-auto">
               Every year, billions of tons of food are wasted while millions suffer from hunger. We bridge this gap.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              <div className="bg-white p-8 rounded-3xl shadow-lg border-b-4 border-primary">
+              <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border-b-4 border-primary">
                 <h3 className="text-2xl font-bold text-primary mb-2">1.3B Tons</h3>
                 <p className="text-gray-500 text-sm uppercase font-bold tracking-wider">Food Wasted Yearly</p>
               </div>
-              <div className="bg-white p-8 rounded-3xl shadow-lg border-b-4 border-warm">
+              <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border-b-4 border-warm">
                 <h3 className="text-2xl font-bold text-warm mb-2">828 Million</h3>
                 <p className="text-gray-500 text-sm uppercase font-bold tracking-wider">People Facing Hunger</p>
               </div>
-              <div className="bg-white p-8 rounded-3xl shadow-lg border-b-4 border-accent">
+              <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border-b-4 border-accent">
                 <h3 className="text-2xl font-bold text-accent mb-2">30%</h3>
                 <p className="text-gray-500 text-sm uppercase font-bold tracking-wider">Waste Reduction Goal</p>
               </div>
@@ -166,42 +166,42 @@ export default function Home() {
         </section>
 
         {/* Testimonials */}
-        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-800 transition-colors duration-300">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-5xl font-bold text-center mb-16 text-gray-800">Community Voices</h2>
+            <h2 className="text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white">Community Voices</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {/* Card 1 */}
-              <div className="bg-gray-50 p-8 rounded-3xl shadow-lg relative border border-gray-100">
+              <div className="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl shadow-lg relative border border-gray-100 dark:border-gray-600">
                 <div className="flex items-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-2xl">👨‍🍳</div>
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800">Harshit Diwedi</p>
+                    <p className="font-bold text-gray-800 dark:text-white">Harshit Diwedi</p>
                     <p className="text-xs text-primary font-bold">Restaurant Owner</p>
                   </div>
                 </div>
-                <p className="text-gray-700 italic">"Refoodify made donating surplus food effortless. We've reduced waste by 40% and helped feed hundreds!"</p>
+                <p className="text-gray-700 dark:text-gray-300 italic">"Refoodify made donating surplus food effortless. We've reduced waste by 40% and helped feed hundreds!"</p>
               </div>
               {/* Card 2 */}
-              <div className="bg-gray-50 p-8 rounded-3xl shadow-lg relative border border-gray-100">
+              <div className="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl shadow-lg relative border border-gray-100 dark:border-gray-600">
                 <div className="flex items-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-warm/20 flex items-center justify-center text-2xl">🤝</div>
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800">Beauty Mishra</p>
+                    <p className="font-bold text-gray-800 dark:text-white">Beauty Mishra</p>
                     <p className="text-xs text-warm font-bold">NGO Volunteer</p>
                   </div>
                 </div>
-                <p className="text-gray-700 italic">"Thanks to Refoodify, we receive fresh donations regularly. It's transformed how we serve our community."</p>
+                <p className="text-gray-700 dark:text-gray-300 italic">"Thanks to Refoodify, we receive fresh donations regularly. It's transformed how we serve our community."</p>
               </div>
               {/* Card 3 */}
-              <div className="bg-gray-50 p-8 rounded-3xl shadow-lg relative border border-gray-100">
+              <div className="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl shadow-lg relative border border-gray-100 dark:border-gray-600">
                 <div className="flex items-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-info/20 flex items-center justify-center text-2xl">🏢</div>
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800">Nilesh Prajapati</p>
+                    <p className="font-bold text-gray-800 dark:text-white">Nilesh Prajapati</p>
                     <p className="text-xs text-info font-bold">Hotel Manager</p>
                   </div>
                 </div>
-                <p className="text-gray-700 italic">"The inventory management feature is amazing. We track everything perfectly and donate smarter than ever."</p>
+                <p className="text-gray-700 dark:text-gray-300 italic">"The inventory management feature is amazing. We track everything perfectly and donate smarter than ever."</p>
               </div>
             </div>
           </div>

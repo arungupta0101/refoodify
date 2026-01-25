@@ -326,8 +326,8 @@ export default function Donate() {
 
                 {/* 💰 Donate Money Section */}
                 {donationType === 'money' && (
-                  <form onSubmit={handleSubmit} className="space-y-8 animate-fadeIn">
-                    <div className="flex items-center gap-3 mb-6 border-b pb-4">
+                  <div className="space-y-8 animate-fadeIn text-center">
+                    <div className="flex flex-col items-center gap-3 mb-6 border-b pb-4">
                       <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
                         <CurrencyRupeeIcon className="w-8 h-8" />
                       </div>
@@ -337,39 +337,19 @@ export default function Donate() {
                       </div>
                     </div>
 
-                    <div className="space-y-6">
-                      <label className="text-sm font-bold text-gray-600">Select Amount</label>
-                      <div className="grid grid-cols-3 gap-4">
-                        {[100, 200, 500].map(amt => (
-                          <button
-                            key={amt}
-                            type="button"
-                            onClick={() => setFormData({...formData, amount: amt})}
-                            className={`py-3 rounded-xl font-bold border-2 transition-all ${formData.amount == amt ? 'border-blue-500 bg-blue-50 text-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-300'}`}
-                          >
-                            ₹{amt}
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="relative">
-                        <span className="absolute left-4 top-4 text-gray-500 font-bold">₹</span>
-                        <input 
-                          type="number" 
-                          name="amount" 
-                          value={formData.amount}
-                          placeholder="Enter custom amount" 
-                          onChange={handleChange} 
-                          className="w-full pl-10 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-lg font-bold text-gray-800"
-                          required 
-                        />
-                      </div>
+                    <div className="bg-blue-50 p-8 rounded-3xl border border-blue-100">
+                        <h3 className="text-2xl font-bold text-blue-800 mb-4">Feature Coming Soon! 🚀</h3>
+                        <p className="text-gray-600 mb-6">
+                            We are currently integrating a secure payment gateway. <br/>
+                            In the meantime, you can support us by scanning the QR code below.
+                        </p>
+                        
+                        <div className="bg-white p-4 inline-block rounded-2xl shadow-lg border border-gray-200 mb-4">
+                            <img src="/qr.jpg" alt="Donate QR Code" className="w-64 h-64 object-contain" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500">Scan with any UPI App</p>
                     </div>
-
-                    <button type="submit" className="w-full bg-blue-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-600 hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                      Proceed to Pay
-                    </button>
-                  </form>
+                  </div>
                 )}
 
                 {/* 🤝 Volunteer Registration Section */}

@@ -19,28 +19,9 @@ export default async function handler(req, res) {
         return res.status(201).json({ ...vol.toObject(), pointsEarned });
       } else {
         const donation = await Donation.create(req.body);
-        const donor = await User.findById(donorId);
-        const userType = donor?.userType || 'user';
         
-        // Calculate points based on rules
-        if (type === 'money') {
-             pointsEarned = Math.floor(parseInt(amount) / 10) || 0; // 1 point per 10 Rupees
-        } else if (type === 'food') {
-             if (userType === 'restaurant') {
-                 const qty = parseInt(quantity) || 10; 
-                 pointsEarned = Math.floor(qty / 10) * 50; // 50 pts per 10kg
-                 if (pointsEarned < 50) pointsEarned = 50;
-                 if (isEmergency) pointsEarned += 100;
-             } else {
-                 // Normal User
-                 pointsEarned = 100;
-                 if (isEmergency) pointsEarned += 200;
-             }
-        }
-
-        if (donorId) {
-          await User.findByIdAndUpdate(donorId, { $inc: { points: pointsEarned } });
-        }
+        // Points are NOT awarded at creation. They are awarded upon verification.
+        pointsEarned = 0;
 
         // Notify NGOs in the area
         if (type === 'food') {
@@ -70,7 +51,16 @@ export default async function handler(req, res) {
     } else if (req.method === 'GET') {
       const { userId } = req.query;
       const donations = await Donation.find({ donorId: userId }).sort({ createdAt: -1 });
-      res.status(200).json(donations);
+      
+      const donationsWithNames = await Promise.all(donations.map(async (d) => {
+        const obj = d.toObject();
+        if (obj.ngoId) {
+          const ngo = await User.findById(obj.ngoId);
+          if (ngo) obj.ngoName = ngo.organizationName || ngo.name || 'NGO';
+        }
+        return obj;
+      }));
+      res.status(200).json(donationsWithNames);
     } else if (req.method === 'DELETE') {
       const { id } = req.query;
       await Donation.findByIdAndDelete(id);

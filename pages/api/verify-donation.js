@@ -21,10 +21,15 @@ export default async function handler(req, res) {
     const donation = await Donation.findById(donationId);
     if (!donation) return res.status(404).json({ message: 'Donation not found' });
 
+    // Prevent duplicate verification (Fix: Points/Rating glitch)
+    if (donation.verified) {
+      return res.status(400).json({ message: 'Donation is already verified' });
+    }
+
     // Update Donation
     donation.ngoId = ngoId;
     donation.verified = true;
-    donation.verificationRating = Number(rating);
+    donation.verificationRating = Math.min(Math.max(Number(rating), 1), 5); // Ensure 1-5
     donation.verificationReview = review;
     donation.verificationPhoto = photo;
     donation.status = 'completed';
@@ -36,21 +41,36 @@ export default async function handler(req, res) {
       if (donor) {
         const currentRating = Number(donor.rating) || 0;
         const currentCount = Number(donor.ratingCount) || 0;
-        const submittedRating = Number(rating);
+        const submittedRating = Math.min(Math.max(Number(rating), 1), 5);
         
         const newRating = ((currentRating * currentCount) + submittedRating) / (currentCount + 1);
         
         let pointsChange = 0;
-        // If rating < 3, decrease points (penalty)
-        if (submittedRating < 3) {
-          pointsChange = -10; 
-        } else {
-          pointsChange = 5; // Bonus points for good quality
-        }
 
-        // Verified Pickup Success for Restaurant
-        if (donor.userType === 'restaurant') {
-            pointsChange += 30;
+        // Calculate Points only for Food Donations
+        if (donation.type === 'food') {
+             if (donor.userType === 'restaurant') {
+                 const qty = parseInt(donation.quantity) || 10; 
+                 let base = Math.floor(qty / 10) * 50; // 50 pts per 10kg
+                 if (base < 50) base = 50;
+                 if (donation.isEmergency) base += 100;
+                 pointsChange += base;
+
+                 // Verified Pickup Success for Restaurant
+                 pointsChange += 30;
+             } else {
+                 // Normal User
+                 let base = 100;
+                 if (donation.isEmergency) base += 200;
+                 pointsChange += base;
+             }
+
+             // Rating adjustments (Bonus/Penalty)
+             if (submittedRating < 3) {
+               pointsChange -= 10; 
+             } else {
+               pointsChange += 5; 
+             }
         }
 
         await User.findByIdAndUpdate(donation.donorId, {

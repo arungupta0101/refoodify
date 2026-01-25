@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLoading } from '../contexts/LoadingContext';
 import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -22,10 +23,10 @@ import {
 
 export default function Restaurant() {
   const { user } = useAuth();
+  const { setIsLoading } = useLoading(); // Global Loader Hook
   const router = useRouter();
   const [isRegistered, setIsRegistered] = useState(false);
   const [donations, setDonations] = useState([]);
-  const [loading, setLoading] = useState(false);
   
   // Separate forms for Registration and Donation
   const [regForm, setRegForm] = useState({
@@ -136,7 +137,7 @@ export default function Restaurant() {
       toast.error("Please accept all safety & legal guidelines.");
       return;
     }
-    setLoading(true);
+    setIsLoading(true); // Show Global Loader
     try {
       console.log("Registering restaurant for User UID:", user.uid);
       const res = await fetch(`/api/user/profile?uid=${user.uid}`, {
@@ -155,13 +156,13 @@ export default function Restaurant() {
       console.error("Restaurant Registration Error:", error);
       toast.error('Registration failed');
     } finally {
-      setLoading(false);
+      setIsLoading(false); // Hide Global Loader
     }
   };
 
   const handleDonate = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true); // Show Global Loader
     try {
       console.log("Restaurant donating for User UID:", user.uid);
       const res = await fetch('/api/donations', {
@@ -184,7 +185,7 @@ export default function Restaurant() {
       console.error("Restaurant Donation Error:", error);
       toast.error('Donation failed');
     } finally {
-      setLoading(false);
+      setIsLoading(false); // Hide Global Loader
     }
   };
 
@@ -389,17 +390,12 @@ export default function Restaurant() {
                   {/* 🚀 CTA Button */}
                   <button 
                     type="submit" 
-                    disabled={loading}
                     className="w-full bg-gradient-to-r from-primary to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    {loading ? (
-                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
                       <>
                         <span>Register Restaurant & Start Donating</span>
                         <ArrowUpTrayIcon className="w-5 h-5" />
                       </>
-                    )}
                   </button>
                 </div>
               </form>
@@ -501,10 +497,9 @@ export default function Restaurant() {
 
               <button 
                 type="submit" 
-                disabled={loading}
                 className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2"
               >
-                {loading ? 'Processing...' : 'List Donation'}
+                List Donation
               </button>
             </form>
 
@@ -520,11 +515,21 @@ export default function Restaurant() {
                         <p className="font-bold text-gray-800">{donation.foodType}</p>
                         <p className="text-sm text-gray-500">{donation.quantity} • {new Date(donation.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                        donation.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {donation.status || 'Active'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                          donation.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {donation.status || 'Active'}
+                        </span>
+                        {donation.status === 'accepted' && (
+                          <button 
+                            onClick={() => donation.ngoId ? router.push(`/chat?withUser=${donation.ngoId}&name=${donation.ngoName || 'NGO'}`) : toast.error("Waiting for NGO details...")} 
+                            className="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600"
+                          >
+                            💬 Chat
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

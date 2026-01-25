@@ -15,8 +15,17 @@ export default async function handler(req, res) {
     const { uid } = req.query;
 
     if (req.method === 'GET') {
-      const user = await User.findById(uid);
+      let user = await User.findById(uid);
       if (!user) return res.status(404).json({ message: 'User not found' });
+
+      // Generate Referral Code if missing
+      if (!user.referralCode) {
+         const prefix = (user.name ? user.name.replace(/[^a-zA-Z]/g, '').substring(0, 4) : 'USER').toUpperCase();
+         const randomNum = Math.floor(1000 + Math.random() * 9000);
+         user.referralCode = `${prefix}${randomNum}`;
+         await user.save();
+      }
+
       res.status(200).json(user);
     } else if (req.method === 'PUT') {
       const updatedUser = await User.findByIdAndUpdate(uid, req.body, { new: true });
