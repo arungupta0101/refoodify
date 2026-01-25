@@ -48,7 +48,7 @@ const teamMembers = [
     bio: 'Harshit is the creative strategist with a smart mind who always has a plan. He plays a pivotal role in marketing and fostering creative thinking within the team.',
     image: '/team/harshit.jpeg',
     social: {
-      instagram: 'https://instagram.com/harshit_dummy',
+      instagram: 'https://www.instagram.com/mr____unkown____1/?utm_source=qr&r=nametag',
       linkedin: 'https://linkedin.com/in/harshit_dummy',
       github: 'https://github.com/harshit_dummy'
     },

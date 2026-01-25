@@ -17,7 +17,8 @@ import {
   TrophyIcon,
   FireIcon,
   CalendarDaysIcon,
-  HandThumbUpIcon
+  HandThumbUpIcon,
+  MicrophoneIcon
 } from '@heroicons/react/24/outline';
 
 export default function Donate() {
@@ -30,6 +31,9 @@ export default function Donate() {
   const [userStats, setUserStats] = useState({ peopleFed: 0, foodSaved: 0, co2Reduced: 0 });
   const [emergencyNeeds, setEmergencyNeeds] = useState([]);
   const [currentPoints, setCurrentPoints] = useState(0);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceLang, setVoiceLang] = useState('en-US');
+  const [showVoiceGuide, setShowVoiceGuide] = useState(false);
 
   // Safety Checks State
   const [safetyChecks, setSafetyChecks] = useState({
@@ -39,6 +43,7 @@ export default function Donate() {
 
   const [formData, setFormData] = useState({
     foodType: 'Veg', 
+    foodItem: '',
     quantity: '', 
     location: '', 
     expiryDate: '',
@@ -106,7 +111,118 @@ export default function Donate() {
     }
   }, [user]);
 
+  // Offline Sync Effect
+  useEffect(() => {
+    const syncOfflineDonations = async () => {
+      if (navigator.onLine && user) {
+        const offlineDonations = JSON.parse(localStorage.getItem('offline_donations') || '[]');
+        if (offlineDonations.length > 0) {
+          const toastId = toast.loading(`Syncing ${offlineDonations.length} offline donations...`);
+          let successCount = 0;
+          const remaining = [];
+          
+          for (const donation of offlineDonations) {
+            try {
+               const res = await fetch('/api/donations', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(donation)
+               });
+               if (res.ok) successCount++;
+               else remaining.push(donation);
+            } catch (e) {
+               remaining.push(donation);
+            }
+          }
+
+          localStorage.setItem('offline_donations', JSON.stringify(remaining));
+          if (successCount > 0) toast.success(`Synced ${successCount} donations!`, { id: toastId });
+          else if (remaining.length === 0) toast.dismiss(toastId);
+        }
+      }
+    };
+    window.addEventListener('online', syncOfflineDonations);
+    syncOfflineDonations();
+    return () => window.removeEventListener('online', syncOfflineDonations);
+  }, [user]);
+
   const generateReferenceNumber = () => `REF-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
+
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Voice input not supported in this browser.");
+      return;
+    }
+
+    // Show guide immediately
+    setIsListening(true);
+    setShowVoiceGuide(true);
+    setTimeout(() => setShowVoiceGuide(false), 8000);
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = voiceLang;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onend = () => { setIsListening(false); setShowVoiceGuide(false); };
+    recognition.onerror = () => { setIsListening(false); setShowVoiceGuide(false); };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      toast.success(`Heard: "${transcript}"`);
+      processVoiceCommand(transcript);
+    };
+
+    recognition.start();
+  };
+
+  const processVoiceCommand = (text) => {
+    const lower = text.toLowerCase();
+    let updates = {};
+
+    // Hindi Number Mapping
+    const hindiNumbers = {
+      'ek': '1', 'do': '2', 'teen': '3', 'char': '4', 'paanch': '5', 'che': '6', 'chah': '6', 'saat': '7', 'aath': '8', 'nau': '9', 'das': '10',
+      'gyarah': '11', 'barah': '12', 'bees': '20', 'pachas': '50', 'sau': '100'
+    };
+
+    let processedText = lower;
+    Object.keys(hindiNumbers).forEach(key => {
+        processedText = processedText.replace(new RegExp(`\\b${key}\\b`, 'g'), hindiNumbers[key]);
+    });
+    
+    // 1. Extract Quantity (e.g., "10 plates", "5 kg")
+    const qtyMatch = processedText.match(/(\d+)\s*(plates?|kg|meals?|packets?|servings?|people|logo|thali)?/);
+    let textWithoutQty = processedText;
+    if (qtyMatch) {
+      updates.quantity = `${qtyMatch[1]} ${qtyMatch[2] || ''}`.trim();
+      textWithoutQty = textWithoutQty.replace(qtyMatch[0], '').trim();
+    }
+
+    // 2. Extract Location (after "near", "in", "at")
+    // Hindi: "Gorakhpur me" -> capture "Gorakhpur"
+    const hindiLocMatch = textWithoutQty.match(/(.+?)\s+(?:me|mein|ke\s+pass)/);
+    const engLocMatch = textWithoutQty.match(/(?:near|in|at)\s+(.+)/);
+
+    let locRaw = hindiLocMatch ? hindiLocMatch[1] : (engLocMatch ? engLocMatch[1] : '');
+
+    if (locRaw) {
+      locRaw = locRaw.replace(/(?:donate|kro|karna|hai|chahiye|bhejo|ka|ki).*/g, '').trim();
+      updates.location = locRaw.replace(/[.,!]*$/, '');
+      updates.city = updates.location.split(' ')[0];
+    }
+
+    // 3. Extract Food Item (Heuristic: Remove quantity and location keywords)
+    let desc = processedText;
+    if (qtyMatch) desc = desc.replace(qtyMatch[0], '');
+    if (updates.location) desc = desc.replace(updates.location, '');
+    desc = desc.replace(/donate|i want to|please|food|is|near|in|at|me|mein|ke pass|kro|karna|hai|ko|chahiye|bhejo|ka|ki/g, '').trim();
+    desc = desc.replace(/\d+/g, '').trim();
+    if (desc) updates.foodItem = desc.charAt(0).toUpperCase() + desc.slice(1);
+
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,6 +237,28 @@ export default function Donate() {
     }
 
     setIsSubmitting(true);
+
+    // Offline Handling
+    if (!navigator.onLine) {
+        let payload = {};
+        if (donationType === 'volunteer') {
+            const refNum = generateReferenceNumber();
+            payload = { ...formData, userId: user.uid, referenceNumber: refNum, type: 'volunteer' };
+            setReferenceNumber(refNum);
+            setShowSuccessModal(true);
+        } else {
+            const typeToSend = donationType === 'emergency' ? 'food' : donationType;
+            payload = { ...formData, donorId: user.uid, type: typeToSend, isEmergency: donationType === 'emergency' };
+        }
+
+        const offlineDonations = JSON.parse(localStorage.getItem('offline_donations') || '[]');
+        offlineDonations.push(payload);
+        localStorage.setItem('offline_donations', JSON.stringify(offlineDonations));
+        
+        setIsSubmitting(false);
+        toast.success('Saved offline! Will sync when internet returns.');
+        return;
+    }
 
     try {
       console.log("Submitting donation for User UID:", user.uid);
@@ -202,7 +340,7 @@ export default function Donate() {
             
             {/* Left Column: Forms */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 p-8 relative">
+              <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 relative">
                 
                 {/* 🍱 Food Donation Section */}
                 {(donationType === 'food' || donationType === 'emergency') && (
@@ -211,9 +349,30 @@ export default function Donate() {
                       <div className={`p-3 rounded-xl ${donationType === 'emergency' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
                         {donationType === 'emergency' ? <ExclamationTriangleIcon className="w-8 h-8" /> : <HeartIcon className="w-8 h-8" />}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h2 className="text-2xl font-bold text-gray-800">{donationType === 'emergency' ? 'Emergency Relief' : 'Donate Surplus Food'}</h2>
                         <p className="text-gray-500 text-sm">Share your meal, share the love.</p>
+                      </div>
+                      <div className="relative flex items-center gap-2">
+                        <button 
+                          type="button" 
+                          onClick={() => setVoiceLang(voiceLang === 'en-US' ? 'hi-IN' : 'en-US')}
+                          className="text-xs font-bold px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                          title="Switch Language"
+                        >
+                          {voiceLang === 'en-US' ? 'EN' : 'HI'}
+                        </button>
+                        <button type="button" onClick={startListening} className={`p-3 rounded-full transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse ring-2 ring-red-400' : 'bg-gray-100 text-gray-600 hover:bg-green-500 hover:text-white'}`} title="Voice Fill">
+                          <MicrophoneIcon className="w-6 h-6" />
+                        </button>
+                        {showVoiceGuide && (
+                          <div className="absolute bottom-full mb-2 right-0 w-64 bg-gray-900 text-white text-xs p-3 rounded-xl shadow-xl z-50 animate-bounceIn">
+                            <div className="absolute bottom-[-6px] right-4 w-3 h-3 bg-gray-900 rotate-45"></div>
+                            <p className="font-bold mb-1">🎤 Try saying:</p>
+                            <p className="italic text-gray-300 mb-1">"{voiceLang === 'en-US' ? 'Donate 5kg Rice in Delhi' : 'Char plate rice Gorakhpur me donate kro'}"</p>
+                            <p className="text-[10px] text-gray-400">Listening...</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -235,12 +394,26 @@ export default function Donate() {
                         </div>
                       </div>
 
+                      {/* Food Item Name */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-600">Food Item</label>
+                        <input 
+                          type="text" 
+                          name="foodItem" 
+                          placeholder="e.g. Rice, Curry, Bread" 
+                          value={formData.foodItem}
+                          onChange={handleChange} 
+                          className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
+                        />
+                      </div>
+
                       {/* Quantity */}
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-600">Quantity (People/Kg)</label>
                         <input 
                           type="text" 
                           name="quantity" 
+                          value={formData.quantity}
                           placeholder="e.g. 50 meals or 10kg" 
                           onChange={handleChange} 
                           className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
@@ -256,17 +429,18 @@ export default function Donate() {
                           <input 
                             type="datetime-local" 
                             name="expiryDate" 
+                            value={formData.expiryDate}
                             onChange={handleChange} 
                             className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
                             required 
                           />
                         </div>
+                      </div>
 
                       {/* City (For NGO Notification) */}
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-600">City</label>
-                        <input type="text" name="city" placeholder="e.g. Gorakhpur" onChange={handleChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all" required />
-                      </div>
+                        <input type="text" name="city" value={formData.city} placeholder="e.g. Gorakhpur" onChange={handleChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all" required />
                       </div>
 
                       {/* Pickup Address */}
@@ -277,6 +451,7 @@ export default function Donate() {
                           <input 
                             type="text" 
                             name="location" 
+                            value={formData.location}
                             placeholder="Enter full address" 
                             onChange={handleChange} 
                             className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
@@ -641,6 +816,13 @@ export default function Donate() {
         .animate-popIn { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounceIn {
+          0% { opacity: 0; transform: scale(0.3); }
+          50% { opacity: 1; transform: scale(1.05); }
+          70% { transform: scale(0.9); }
+          100% { transform: scale(1); }
+        }
+        .animate-bounceIn { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
       `}</style>
       <Footer />
     </>

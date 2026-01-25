@@ -67,6 +67,35 @@ export default function Inventory() {
     };
   }, [user]);
 
+  // Offline Sync Effect
+  useEffect(() => {
+    const syncOfflineData = async () => {
+      if (navigator.onLine && user) {
+        const offlineData = JSON.parse(localStorage.getItem('offline_inventory') || '[]');
+        if (offlineData.length > 0) {
+          const toastId = toast.loading('Syncing offline inventory...');
+          try {
+            const res = await fetch('/api/inventory', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(offlineData)
+            });
+            if (res.ok) {
+              localStorage.removeItem('offline_inventory');
+              toast.success('Inventory synced successfully!', { id: toastId });
+              fetchInventory();
+            }
+          } catch (e) {
+            console.error("Sync failed", e);
+          }
+        }
+      }
+    };
+    window.addEventListener('online', syncOfflineData);
+    syncOfflineData();
+    return () => window.removeEventListener('online', syncOfflineData);
+  }, [user]);
+
   const fetchInventory = () => {
     return fetch(`/api/inventory?userId=${user.uid}`)
       .then(res => res.json())
@@ -184,6 +213,21 @@ export default function Inventory() {
   const handleAddItem = async (e) => {
     e.preventDefault();
     if (!user) { setShowLoginModal(true); return; }
+
+    // Offline Handling
+    if (!navigator.onLine) {
+      const itemPayload = { ...newItem, userId: user.uid };
+      const offlineItems = JSON.parse(localStorage.getItem('offline_inventory') || '[]');
+      offlineItems.push(itemPayload);
+      localStorage.setItem('offline_inventory', JSON.stringify(offlineItems));
+      
+      const tempItem = { ...itemPayload, _id: `temp-${Date.now()}`, offline: true };
+      setInventory([tempItem, ...inventory]);
+      toast.success('Saved offline! Will sync when online.');
+      setNewItem({ name: '', expiry: '', quantity: '', unit: 'pcs', storage: 'Dry', note: '', alertDays: 2 });
+      setShowAddForm(false);
+      return;
+    }
     
     try {
       const res = await fetch('/api/inventory', {
@@ -587,7 +631,10 @@ export default function Inventory() {
                         <tbody className="divide-y divide-gray-50">
                             {filteredInventory.map((item, idx) => (
                                 <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="p-5 font-bold text-gray-800">{item.name}</td>
+                                    <td className="p-5 font-bold text-gray-800">
+                                      {item.name}
+                                      {item.offline && <span className="ml-2 text-[10px] bg-gray-200 text-gray-600 px-2 py-1 rounded-full">Offline</span>}
+                                    </td>
                                     <td className="p-5 text-gray-600">{item.quantity || '-'} {item.unit || ''}</td>
                                     <td className="p-5 text-gray-600">{new Date(item.expiry).toLocaleDateString()}</td>
                                     <td className="p-5">
@@ -620,7 +667,10 @@ export default function Inventory() {
                             <div className={`absolute top-0 left-0 w-1 h-full ${getStatusColor(item.expiry).split(' ')[0].replace('bg-', 'bg-')}`}></div>
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 className="font-bold text-lg text-gray-800">{item.name}</h3>
+                                    <h3 className="font-bold text-lg text-gray-800">
+                                      {item.name}
+                                      {item.offline && <span className="ml-2 text-[10px] bg-gray-200 text-gray-600 px-2 py-1 rounded-full align-middle">Offline</span>}
+                                    </h3>
                                     <p className="text-xs text-gray-500">{item.storage || 'Dry Storage'}</p>
                                 </div>
                                 <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border ${getStatusColor(item.expiry)}`}>

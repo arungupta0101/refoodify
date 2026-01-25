@@ -23,14 +23,18 @@ export default function Header() {
       items: [
         { name: 'Restaurant', path: '/restaurant' },
         { name: 'Inventory', path: '/inventory' },
+        { name: 'Campaigns', path: '/campaigns' },
       ]
     },
     {
       title: 'Community',
       items: [
+        { name: 'Community Feed', path: '/community' },
         { name: 'Events', path: '/events' },
         { name: 'Blog', path: '/blog' },
         { name: 'Leaderboard', path: '/leaderboard' },
+        { name: 'Donation Wall', path: '/donation-wall' },
+        { name: 'Volunteer Tasks', path: '/volunteer-tasks' },
         { name: 'Rewards', path: '/rewards' },
       ]
     },
@@ -38,6 +42,7 @@ export default function Header() {
       title: 'More',
       items: [
         { name: 'About', path: '/about' },
+        { name: 'Carbon Calculator', path: '/carbon-calculator' },
         { name: 'Support', path: '/support' },
       ]
     }
