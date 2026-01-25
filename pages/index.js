@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import { UsersIcon, HeartIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline';
-import DevPopup from '../components/DevPopup'; // Popup Component Import kiya
 
 export default function Home() {
   const { user } = useAuth();
@@ -62,9 +61,6 @@ export default function Home() {
           })}
         </script>
       </Head>
-
-      {/* --- ADDED POPUP --- */}
-      <DevPopup /> 
 
       <Header />
       

@@ -129,8 +129,9 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {/* Install App Button (Visible only if installable) */}
             {deferredPrompt && (
-              <button onClick={handleInstallClick} className="hidden lg:flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all border border-white/30">
-                <ArrowDownTrayIcon className="h-4 w-4" /> Install App
+              <button onClick={handleInstallClick} className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all border border-white/30">
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                <span className="hidden lg:inline">Install App</span>
               </button>
             )}
 
