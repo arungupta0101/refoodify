@@ -40,7 +40,7 @@ export default function Profile() {
       return;
     }
     fetchProfile();
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+    setIsAdmin(localStorage.getItem('isAdmin') === 'true' || user.email === 'admin@refoodify.com');
   }, [user]);
 
   const fetchProfile = async () => {

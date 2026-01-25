@@ -22,7 +22,15 @@ export default function Leaderboard() {
     fetch(`/api/leaderboard?type=${category}&sortBy=${sortBy}`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) setLeaders(data);
+        if (Array.isArray(data)) {
+          // Filter out admin from leaderboard
+          setLeaders(data.filter(user => {
+            const email = (user.email || '').toLowerCase();
+            const name = (user.name || '').toLowerCase();
+            const type = (user.userType || '').toLowerCase();
+            return email !== 'admin@refoodify.com' && !name.includes('admin') && type !== 'admin';
+          }));
+        }
         else setLeaders([]);
         setLoading(false);
       })
