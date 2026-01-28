@@ -18,7 +18,10 @@ import {
   CursorArrowRaysIcon,
   TruckIcon,
   HeartIcon,
-  TrophyIcon
+  TrophyIcon,
+  FireIcon,
+  SparklesIcon,
+  MicrophoneIcon
 } from '@heroicons/react/24/outline';
 
 export default function Restaurant() {
@@ -55,6 +58,65 @@ export default function Restaurant() {
     hygiene: false,
     legal: false
   });
+
+  // Voice State
+  const [isListening, setIsListening] = useState(false);
+  const [voiceLang, setVoiceLang] = useState('en-US');
+  const [showVoiceGuide, setShowVoiceGuide] = useState(false);
+
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      toast.error("Voice input not supported in this browser.");
+      return;
+    }
+
+    setIsListening(true);
+    setShowVoiceGuide(true);
+    setTimeout(() => setShowVoiceGuide(false), 8000);
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = voiceLang;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onend = () => { setIsListening(false); setShowVoiceGuide(false); };
+    recognition.onerror = () => { setIsListening(false); setShowVoiceGuide(false); };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      toast.success(`Heard: "${transcript}"`);
+      processVoiceCommand(transcript);
+    };
+
+    recognition.start();
+  };
+
+  const processVoiceCommand = (text) => {
+    const lower = text.toLowerCase();
+    let updates = {};
+
+    const hindiNumbers = {
+      'ek': '1', 'do': '2', 'teen': '3', 'char': '4', 'paanch': '5', 'che': '6', 'chah': '6', 'saat': '7', 'aath': '8', 'nau': '9', 'das': '10',
+      'gyarah': '11', 'barah': '12', 'bees': '20', 'pachas': '50', 'sau': '100'
+    };
+
+    let processedText = lower;
+    Object.keys(hindiNumbers).forEach(key => {
+        processedText = processedText.replace(new RegExp(`\\b${key}\\b`, 'g'), hindiNumbers[key]);
+    });
+    
+    const qtyMatch = processedText.match(/(\d+)\s*(plates?|kg|meals?|packets?|servings?|people|logo|thali)?/);
+    if (qtyMatch) {
+      updates.quantity = `${qtyMatch[1]} ${qtyMatch[2] || ''}`.trim();
+      processedText = processedText.replace(qtyMatch[0], '').trim();
+    }
+
+    let desc = processedText.replace(/donate|list|add|food|is|kro|karna|hai|ko|chahiye|bhejo|ka|ki|expiry|date/g, '').trim();
+    if (desc) updates.foodType = desc.charAt(0).toUpperCase() + desc.slice(1);
+
+    setDonateForm(prev => ({ ...prev, ...updates }));
+  };
 
   useEffect(() => {
     if (!user) {
@@ -194,14 +256,35 @@ export default function Restaurant() {
   return (
     <>
       <Header />
-      <main className="py-12 px-4 max-w-5xl mx-auto min-h-screen">
-        
-        {/* 🔝 Header Section */}
-        <div className="mb-10 text-center md:text-left">
-          <h1 className="text-4xl font-black text-gray-800 mb-2">Restaurant Dashboard</h1>
-          <p className="text-gray-500 text-lg">Manage your restaurant donations and help reduce food waste</p>
+      <main className="min-h-screen bg-gray-50 pb-20">
+        {/* Hero / Header Section */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-16 px-4 relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+             <div className="absolute bottom-0 left-0 w-40 h-40 bg-yellow-400 opacity-10 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+             <div className="max-w-6xl mx-auto relative z-10">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">Restaurant Partner Portal</h1>
+                        <p className="text-emerald-100 text-lg max-w-xl">Turn your surplus food into smiles. Manage donations, track impact, and earn green rewards.</p>
+                    </div>
+                    <div className="hidden md:block">
+                        <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-xl">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-white text-emerald-600 p-3 rounded-xl shadow-sm">
+                                    <TrophyIcon className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold uppercase text-emerald-200 tracking-wider">Impact Score</p>
+                                    <p className="text-2xl font-black">Top 5%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+             </div>
         </div>
 
+        <div className="max-w-6xl mx-auto px-4 -mt-10 relative z-20">
         {user.userType === 'ngo' ? (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
             <div className="p-3 bg-red-100 rounded-full text-red-600">
@@ -217,7 +300,7 @@ export default function Restaurant() {
             
             {/* 📋 Registration Card */}
             <div className="lg:col-span-2">
-              <form onSubmit={handleRegister} className="bg-white p-8 rounded-[1.5rem] shadow-xl border border-green-50 relative overflow-hidden">
+              <form onSubmit={handleRegister} className="bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-green-400"></div>
                 
                 <div className="flex items-center gap-4 mb-8">
@@ -402,22 +485,22 @@ export default function Restaurant() {
 
               {/* 📊 Dashboard Preview Section */}
               <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-60">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-70 hover:opacity-100 transition-opacity">
                   <TruckIcon className="w-8 h-8 text-primary mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-800">0</p>
                   <p className="text-xs text-gray-500 font-bold uppercase">Pickups</p>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-60">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-70 hover:opacity-100 transition-opacity">
                   <HeartIcon className="w-8 h-8 text-red-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-800">0kg</p>
                   <p className="text-xs text-gray-500 font-bold uppercase">Donated</p>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-60">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-70 hover:opacity-100 transition-opacity">
                   <UserIcon className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-800">0</p>
                   <p className="text-xs text-gray-500 font-bold uppercase">NGOs</p>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-60">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-center opacity-70 hover:opacity-100 transition-opacity">
                   <TrophyIcon className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-gray-800">New</p>
                   <p className="text-xs text-gray-500 font-bold uppercase">Badge</p>
@@ -453,14 +536,75 @@ export default function Restaurant() {
           </div>
         ) : (
           <>
-            <form onSubmit={handleDonate} className="bg-white p-8 rounded-[1.5rem] shadow-lg border border-gray-100 space-y-6 mb-8 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+            {/* Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex items-center gap-4">
+                <div className="p-3 bg-green-50 text-green-600 rounded-2xl"><HeartIcon className="w-8 h-8" /></div>
+                <div>
+                  <p className="text-3xl font-black text-gray-800">{donations.length}</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase">Donations</p>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex items-center gap-4">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><TruckIcon className="w-8 h-8" /></div>
+                <div>
+                  <p className="text-3xl font-black text-gray-800">{donations.filter(d => d.status === 'completed').length}</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase">Pickups</p>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex items-center gap-4">
+                <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl"><FireIcon className="w-8 h-8" /></div>
+                <div>
+                  <p className="text-3xl font-black text-gray-800">{donations.length * 5}</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase">Meals Served</p>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-primary to-emerald-600 p-6 rounded-3xl shadow-lg text-white flex items-center justify-between">
+                <div>
+                  <p className="text-3xl font-black">Gold</p>
+                  <p className="text-xs opacity-80 font-bold uppercase">Current Badge</p>
+                </div>
+                <TrophyIcon className="w-12 h-12 opacity-80" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Donation Form */}
+            <div className="lg:col-span-2">
+            <form onSubmit={handleDonate} className="bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100 space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-green-400"></div>
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">List Surplus Food</h2>
-                <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase">Active</span>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <SparklesIcon className="w-6 h-6 text-yellow-500" /> List Surplus Food
+                  </h2>
+                  <p className="text-gray-500 text-sm">Quickly list food for NGOs to pickup.</p>
+                </div>
+                {/* Voice Controls */}
+                <div className="relative flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setVoiceLang(voiceLang === 'en-US' ? 'hi-IN' : 'en-US')}
+                    className="text-xs font-bold px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                    title="Switch Language"
+                  >
+                    {voiceLang === 'en-US' ? 'EN' : 'HI'}
+                  </button>
+                  <button type="button" onClick={startListening} className={`p-3 rounded-full transition-all ${isListening ? 'bg-red-100 text-red-600 animate-pulse ring-2 ring-red-400' : 'bg-gray-100 text-gray-600 hover:bg-green-500 hover:text-white'}`} title="Voice Fill">
+                    <MicrophoneIcon className="w-6 h-6" />
+                  </button>
+                  {showVoiceGuide && (
+                    <div className="absolute top-full mt-2 right-0 w-64 bg-gray-900 text-white text-xs p-3 rounded-xl shadow-xl z-50 animate-bounceIn">
+                      <div className="absolute top-[-6px] right-4 w-3 h-3 bg-gray-900 rotate-45"></div>
+                      <p className="font-bold mb-1">🎤 Try saying:</p>
+                      <p className="italic text-gray-300 mb-1">"{voiceLang === 'en-US' ? '50 meals of Rice and Curry' : '50 plate chawal daal'}"</p>
+                      <p className="text-[10px] text-gray-400">Listening...</p>
+                    </div>
+                  )}
+                </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">Food Type</label>
                   <input
@@ -483,7 +627,7 @@ export default function Restaurant() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <label className="text-xs font-bold text-gray-400 uppercase ml-1">Expiry Date</label>
                   <input
                     type="date"
@@ -497,18 +641,20 @@ export default function Restaurant() {
 
               <button 
                 type="submit" 
-                className="w-full bg-primary text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-black transition-all flex items-center justify-center gap-2"
               >
                 List Donation
               </button>
             </form>
+            </div>
 
-            <div className="bg-white p-8 rounded-[1.5rem] shadow-lg border border-gray-100">
+            {/* History List */}
+            <div className="bg-white p-6 rounded-[2rem] shadow-xl border border-gray-100 h-fit">
               <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <ClockIcon className="w-6 h-6 text-primary" /> Donation History
               </h2>
               {donations.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {donations.map((donation) => (
                     <div key={donation.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:shadow-md transition-all">
                       <div>
@@ -539,10 +685,21 @@ export default function Restaurant() {
                 </div>
               )}
             </div>
+            </div>
           </>
         )}
+        </div>
       </main>
       <Footer />
+      <style jsx>{`
+        @keyframes bounceIn {
+          0% { opacity: 0; transform: scale(0.3); }
+          50% { opacity: 1; transform: scale(1.05); }
+          70% { transform: scale(0.9); }
+          100% { transform: scale(1); }
+        }
+        .animate-bounceIn { animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+      `}</style>
     </>
   );
 }
