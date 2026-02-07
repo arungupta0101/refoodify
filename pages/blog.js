@@ -18,7 +18,7 @@ export default function Blog() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 py-12 px-4">
+      <main className="min-h-screen py-12 px-4">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl font-black text-center text-gray-800 mb-12">Stories of Change</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">

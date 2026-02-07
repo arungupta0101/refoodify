@@ -96,7 +96,7 @@ export default function About() {
   return (
     <>
       <Header />
-      <main className="bg-gray-50 min-h-screen pb-20">
+      <main className="min-h-screen pb-20">
         {/* Hero Section */}
         <section className="py-20 bg-primary text-white text-center px-4">
           <motion.h1 

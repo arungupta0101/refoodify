@@ -1,5 +1,7 @@
 import dbConnect from '../../lib/mongodb';
 import mongoose from 'mongoose';
+import checkRateLimit from '../../lib/rateLimit';
+import { sanitizeInput } from '../../lib/validate';
 
 const PostSchema = new mongoose.Schema({
   author: {
@@ -36,6 +38,12 @@ export const config = {
 
 export default async function handler(req, res) {
   await dbConnect();
+
+  // 1. Rate Limiting
+  if (!checkRateLimit(req, 10)) { // Stricter limit for posts
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+
   const { method } = req;
 
   if (method === 'GET') {
@@ -47,7 +55,12 @@ export default async function handler(req, res) {
     }
   } else if (method === 'POST') {
     try {
-      const post = await Post.create(req.body);
+      // 2. Input Sanitization
+      const cleanBody = {
+        ...req.body,
+        content: sanitizeInput(req.body.content)
+      };
+      const post = await Post.create(cleanBody);
       res.status(201).json(post);
     } catch (error) {
       res.status(500).json({ error: 'Failed to create post' });
@@ -65,9 +78,10 @@ export default async function handler(req, res) {
           post.likes.push(userId);
         }
       } else if (action === 'comment') {
+        // Sanitize comment
         post.comments.push({
-          user: userName || 'Anonymous',
-          text: text,
+          user: sanitizeInput(userName) || 'Anonymous',
+          text: sanitizeInput(text),
           timestamp: new Date()
         });
       }

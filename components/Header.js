@@ -78,44 +78,44 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-gradient-to-r from-primary to-secondary dark:from-gray-900 dark:to-gray-800 shadow-lg sticky top-0 z-50 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 transition-colors duration-300">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#39AD48] backdrop-blur-md border-b border-[#39AD48] transition-all duration-300 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
+        <div className="flex justify-between items-center h-20">
           
           {/* Logo */}
-          <Link href="/" className="text-3xl font-bold text-white hover:text-light transition duration-300 transform hover:scale-105 flex items-center gap-2">
-            <span>🌱</span> Refoodify
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-xl group-hover:rotate-12 transition-transform">🌱</div>
+            <span className="text-2xl font-bold text-white tracking-tight">Refoodify</span>
           </Link>
 
           {/* Desktop Navigation (Hidden on Mobile) */}
-          <nav className="hidden lg:flex items-center space-x-6">
+          <nav className="hidden lg:flex items-center gap-8">
             {/* Main Links */}
             {mainLinks.map((link) => (
               <Link 
                 key={link.name} 
                 href={link.path} 
-                className={`text-white font-medium hover:text-light transition duration-300 relative group ${router.pathname === link.path ? 'text-light font-bold' : ''}`}
+                className={`text-sm font-semibold transition-colors ${router.pathname === link.path ? 'text-white font-bold' : 'text-white/90 hover:text-white'}`}
               >
                 {link.name}
-                <span className={`absolute bottom-0 left-0 h-0.5 bg-light transition-all duration-300 ${router.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
               </Link>
             ))}
 
             {/* Dropdowns */}
             {dropdowns.map((group) => (
               <div key={group.title} className="relative group">
-                <button className="flex items-center text-white font-medium hover:text-light transition duration-300 gap-1 focus:outline-none py-2">
+                <button className="flex items-center gap-1 text-sm font-semibold text-white/90 hover:text-white transition-colors py-2">
                   {group.title}
                   <ChevronDownIcon className="h-4 w-4 transition-transform group-hover:rotate-180" />
                 </button>
                 
                 {/* Dropdown Menu */}
-                <div className="absolute left-0 mt-0 w-48 bg-white rounded-xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 z-50 border border-gray-100">
+                <div className="absolute top-full left-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
                   {group.items.map((item) => (
                     <Link 
                       key={item.name} 
                       href={item.path}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-primary transition-colors"
+                      className="block px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-700 rounded-xl transition-colors"
                     >
                       {item.name}
                     </Link>
@@ -126,33 +126,35 @@ export default function Header() {
           </nav>
 
           {/* Right Icons & Hamburger */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             {/* Install App Button (Visible only if installable) */}
             {deferredPrompt && (
-              <button onClick={handleInstallClick} className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-full text-sm font-bold transition-all border border-white/30">
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                <span className="hidden lg:inline">Install App</span>
+              <button onClick={handleInstallClick} className="hidden lg:flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm font-bold transition-all">
+                <ArrowDownTrayIcon className="h-4 w-4" /> App
               </button>
             )}
 
             {/* Theme Toggle */}
-            <button onClick={toggleTheme} className="text-white hover:text-light transition duration-300 p-1" aria-label="Toggle Dark Mode">
-              {theme === 'dark' ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
+            <button onClick={toggleTheme} className="p-2.5 text-white/90 hover:bg-white/10 rounded-full transition-colors">
+              {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </button>
 
-            {/* Profile Link (Desktop) */}
-            <Link href="/profile" className="hidden lg:block text-white hover:text-light transition duration-300" title="Profile">
-              <UserCircleIcon className="h-7 w-7" />
-            </Link>
-            
-            {/* Desktop Auth Buttons */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-white/20">
               {user ? (
-                <button onClick={logout} className="text-sm font-bold text-white border border-white/30 bg-white/10 px-5 py-2 rounded-full hover:bg-white hover:text-primary transition duration-300 backdrop-blur-sm">
-                  Logout
-                </button>
+                <div className="flex items-center gap-3">
+                  <Link href="/profile" className="p-1 rounded-full border-2 border-transparent hover:border-white transition-all">
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <UserCircleIcon className="h-8 w-8 text-white/90" />
+                    )}
+                  </Link>
+                  <button onClick={logout} className="text-sm font-bold text-white/90 hover:text-red-100 transition-colors">
+                    Logout
+                  </button>
+                </div>
               ) : (
-                <Link href="/login" className="text-sm font-bold text-primary bg-white px-6 py-2 rounded-full hover:bg-light transition duration-300 shadow-md">
+                <Link href="/login" className="px-6 py-2.5 bg-white text-[#39AD48] hover:bg-gray-100 text-sm font-bold rounded-full transition-all shadow-lg">
                   Login
                 </Link>
               )}
@@ -161,9 +163,9 @@ export default function Header() {
             {/* Hamburger Button (Only Mobile) */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden text-white p-1 focus:outline-none"
+              className="lg:hidden p-2 text-white"
             >
-              {isMobileMenuOpen ? <XMarkIcon className="h-8 w-8" /> : <Bars3Icon className="h-8 w-8" />}
+              {isMobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
             </button>
           </div>
         </div>

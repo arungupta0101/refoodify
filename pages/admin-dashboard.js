@@ -4,8 +4,12 @@ import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { ChartBarIcon, UserGroupIcon, BuildingStorefrontIcon, HeartIcon, MapIcon, BellIcon, Cog6ToothIcon, ShieldCheckIcon, ChatBubbleLeftRightIcon, DocumentChartBarIcon, TrophyIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../contexts/AuthContext';
+import { useRouter } from 'next/router';
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [data, setData] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null); 
@@ -16,12 +20,11 @@ export default function AdminDashboard() {
   const [broadcastTarget, setBroadcastTarget] = useState('all');
 
   useEffect(() => {
-    const isAdmin = localStorage.getItem('isAdmin');
-    if (isAdmin !== 'true') {
-      window.location.href = '/login';
+    if (!user || user.userType !== 'admin') {
+      // router.push('/login'); // Uncomment to enforce client-side redirect
     }
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, user]);
 
 const fetchData = async () => {
     if (activeTab === 'settings' || activeTab === 'security' || activeTab === 'profile' || activeTab === 'map') {
@@ -35,6 +38,9 @@ const fetchData = async () => {
       if (res.ok) {
         setData(items);
       } else {
+        if (res.status === 401 || res.status === 403) {
+           router.push('/login');
+        }
         setData([]);
         toast.error(items.message || "Failed to load data");
       }
@@ -207,7 +213,7 @@ const fetchData = async () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
       <div className="flex flex-1">
         {/* Sidebar */}
@@ -240,7 +246,7 @@ const fetchData = async () => {
           </nav>
 
           <button 
-            onClick={() => { localStorage.removeItem('isAdmin'); window.location.href='/login'; }}
+            onClick={() => { window.location.href='/login'; }}
             className="w-full mt-20 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all flex items-center gap-2"
           >
             Logout

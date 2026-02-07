@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,11 +20,13 @@ import {
   XMarkIcon,
   PhoneIcon,
   ChatBubbleLeftRightIcon,
-  BoltIcon
+  BoltIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { FaWhatsapp, FaPhone } from 'react-icons/fa';
 
-const containerStyle = { width: '100%', height: '500px' };
+// Dynamically import Map to avoid SSR issues
+const Map = dynamic(() => import('../components/Map'), { ssr: false });
 
 const successStories = [
   { id: 1, title: '500 Meals in Golghar', content: 'Last Sunday, we collected surplus food from Bobbys and fed 500 people near the station.', author: 'Gorakhpur Seva Samiti' }
@@ -46,6 +49,11 @@ export default function FindFood() {
   const [partners, setPartners] = useState({ restaurants: [], ngos: [], volunteers: [] });
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [mapSearchTriggered, setMapSearchTriggered] = useState(false);
+  const [searchRadius, setSearchRadius] = useState(10); // km
+  const [vegOnly, setVegOnly] = useState(false);
   
   // New UI States
   const [showFilters, setShowFilters] = useState(false);
@@ -63,7 +71,9 @@ export default function FindFood() {
   const [filterState, setFilterState] = useState('');
   const [filterDistrict, setFilterDistrict] = useState('');
 
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const indianStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry"
+  ];
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -82,16 +92,42 @@ export default function FindFood() {
     fetch('/api/partners')
       .then(res => res.json())
       .then(data => {
-        if (data) setPartners(data);
+        if (data) {
+            setPartners(data);
+        }
       });
   }, []);
 
-  const filteredRestaurants = partners.restaurants.filter(res => 
-    searchQuery === '' || 
-    (res.address && res.address.toLowerCase().includes(searchQuery.toLowerCase())) || 
-    (res.name && res.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (res.organizationName && res.organizationName.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const handleMapSearch = () => {
+    setMapSearchTriggered(true);
+  };
+
+  useEffect(() => {
+    setSelectedMarker(null);
+  }, [filters, vegOnly, searchQuery, selectedState, selectedCity]);
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return (R * c).toFixed(1);
+  };
+
+  const filteredRestaurants = partners.restaurants.filter(res => {
+    const matchSearch = searchQuery === '' || 
+      (res.address && res.address.toLowerCase().includes(searchQuery.toLowerCase())) || 
+      (res.name && res.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (res.organizationName && res.organizationName.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchState = !mapSearchTriggered || selectedState === '' || (res.address && res.address.toLowerCase().includes(selectedState.toLowerCase()));
+    const matchCity = !mapSearchTriggered || selectedCity === '' || (res.address && res.address.toLowerCase().includes(selectedCity.toLowerCase()));
+    return matchSearch && matchState && matchCity;
+  });
 
   const filteredNgos = partners.ngos.filter(ngo => 
     (filterState === '' || (ngo.address && ngo.address.includes(filterState))) &&
@@ -163,16 +199,44 @@ export default function FindFood() {
     }
   };
 
+  const handleViewOnMap = (item) => {
+    if (item.lat && item.lng) {
+      setCurrentLocation({ lat: item.lat, lng: item.lng });
+      setSelectedMarker(item);
+      setView('map');
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+    } else {
+      toast.error("Location coordinates not available");
+    }
+  };
+
+  // Combine markers for the map
+  const mapMarkers = [
+    ...(filters.surplus ? filteredRestaurants.filter(r => r.lat && r.lng).map(r => ({ ...r, type: 'restaurant' })) : []),
+    ...(filters.surplus ? realDonations.filter(d => d.lat && d.lng).map(d => ({ ...d, type: 'donation' })) : [])
+  ].filter(m => {
+    if (vegOnly) {
+       const type = (m.foodType || m.foodTypeOffered || '').toLowerCase();
+       return type.includes('veg') && !type.includes('non');
+    }
+    return true;
+  });
+
   return (
     <>
+      <Head>
+        {/* Leaflet CSS */}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossOrigin="" />
+      </Head>
       <Header />
-      <main className="py-8 px-4 max-w-7xl mx-auto bg-[#f7faf9] min-h-screen">
+      <main className="py-8 px-4 max-w-7xl mx-auto min-h-screen">
         
         {/* 🔝 Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-gray-800 tracking-tight mb-2">Refoodify Discovery</h1>
           <p className="text-gray-500 text-lg">Discover surplus food, NGOs and volunteering opportunities near you</p>
         </div>
+
 
         {/*  Discovery Tabs */}
         <div className="mb-8 flex flex-wrap justify-center gap-3">
@@ -198,13 +262,10 @@ export default function FindFood() {
           ))}
         </div>
 
-        {/* --- 1. MAP VIEW --- */}
-        <div className={view === 'map' ? 'block' : 'hidden'}>
-          <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white h-[600px]">
-            
-            {/* Floating Search Bar */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-md px-4">
-              <div className="bg-white rounded-full shadow-lg flex items-center p-2 pl-4">
+        {/* Search Bar (Common for Map & List) */}
+        {(view === 'map' || view === 'list') && (
+          <div className="mb-8">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-2">
                 <MagnifyingGlassIcon className="w-5 h-5 text-gray-400" />
                 <input 
                   type="text" 
@@ -213,157 +274,175 @@ export default function FindFood() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+            </div>
+          </div>
+        )}
+
+        {/* --- MAP VIEW (Split Layout) --- */}
+        <div className={view === 'map' ? 'grid grid-cols-1 lg:grid-cols-5 gap-8' : 'hidden'}>
+          {/* Left Column: Map (Sticky) */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-24">
+              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white h-[600px]">
+                {/* Locate Me Button */}
                 <button 
                   onClick={() => navigator.geolocation.getCurrentPosition(pos => setCurrentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }))}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-full text-xs font-bold transition-colors"
+                  className="absolute bottom-6 right-4 z-[1000] bg-white p-3 rounded-full shadow-xl border border-gray-200 hover:bg-gray-50 transition-all text-gray-700"
+                  title="Show Your Location"
                 >
-                  Near Me
+                  <MapPinIcon className="w-6 h-6" />
                 </button>
+
+                {/* Map Component */}
+                <Map 
+                  center={currentLocation} 
+                  markers={mapMarkers} 
+                  selectedMarker={selectedMarker} 
+                  setSelectedMarker={setSelectedMarker}
+                  radius={searchRadius}
+                >
+                  {selectedMarker && (
+                  <div className="p-2 min-w-[200px]">
+                          <h3 className="font-bold text-gray-800 text-lg mb-1">{selectedMarker.name || selectedMarker.foodType}</h3>
+                          <p className="text-sm text-gray-600 mb-1">🍱 {selectedMarker.foodType || 'Surplus Food'}</p>
+                          <p className="text-sm text-gray-600 mb-2">📦 {selectedMarker.quantity}</p>
+                          <p className="text-xs text-gray-400 mb-3">📍 {selectedMarker.location}</p>
+                          <p className="text-xs text-blue-500 font-bold mb-3">📏 {calculateDistance(currentLocation.lat, currentLocation.lng, selectedMarker.lat, selectedMarker.lng)} km away</p>
+                          
+                          {selectedMarker.foodType ? (
+                            user?.userType === 'ngo' ? (
+                              <button onClick={() => { setVerifyModal(selectedMarker); setSelectedMarker(null); }} className="w-full bg-primary text-white py-2 rounded-lg text-xs font-bold">Verify & Pickup</button>
+                            ) : (
+                              <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedMarker.location)}`} target="_blank" className="block text-center w-full bg-blue-500 text-white py-2 rounded-lg text-xs font-bold">Navigate</a>
+                            )
+                          ) : (
+                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedMarker.lat},${selectedMarker.lng}`} target="_blank" className="block text-center w-full bg-green-500 text-white py-2 rounded-lg text-xs font-bold">Navigate</a>
+                          )}
+                  </div>
+                  )}
+                </Map>
               </div>
             </div>
-
-            {/* Smart Filter Panel Toggle */}
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="absolute top-4 left-4 z-10 bg-white p-3 rounded-xl shadow-lg hover:bg-gray-50 transition-all"
-            >
-              <AdjustmentsHorizontalIcon className="w-6 h-6 text-gray-700" />
-            </button>
-
-            {/* Expandable Filter Panel */}
-            {showFilters && (
-              <div className="absolute top-20 left-4 z-10 bg-white/95 backdrop-blur-sm p-5 rounded-2xl shadow-xl w-72 animate-fadeIn border border-gray-100">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-gray-800">Smart Filters</h3>
-                  <button onClick={() => setShowFilters(false)}><XMarkIcon className="w-5 h-5 text-gray-400" /></button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase">Distance: {filters.distance}km</label>
-                    <input type="range" min="1" max="20" value={filters.distance} onChange={(e) => setFilters({...filters, distance: e.target.value})} className="w-full accent-primary" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={filters.surplus} onChange={(e) => setFilters({...filters, surplus: e.target.checked})} className="rounded text-primary focus:ring-primary" />
-                      <span className="text-sm font-medium text-gray-700">Surplus Food</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={filters.ngos} onChange={(e) => setFilters({...filters, ngos: e.target.checked})} className="rounded text-purple-500 focus:ring-purple-500" />
-                      <span className="text-sm font-medium text-gray-700">NGOs Needing Food</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={filters.volunteers} onChange={(e) => setFilters({...filters, volunteers: e.target.checked})} className="rounded text-orange-500 focus:ring-orange-500" />
-                      <span className="text-sm font-medium text-gray-700">Volunteer Requests</span>
-                    </label>
-                  </div>
-
-                  <button onClick={() => setShowFilters(false)} className="w-full bg-primary text-white py-2 rounded-xl font-bold text-sm hover:bg-green-600 transition-all">Apply Filters</button>
-                </div>
-              </div>
-            )}
-
-            {googleMapsApiKey ? (
-            <LoadScript googleMapsApiKey={googleMapsApiKey}>
-              <GoogleMap mapContainerStyle={containerStyle} center={currentLocation} zoom={13}>
-                <Marker position={currentLocation} label="You" />
-                
-                {/* Restaurant Markers */}
-                {filters.surplus && filteredRestaurants.filter(r => r.lat && r.lng).map(res => (
-                  <Marker 
-                    key={res.id} 
-                    position={{ lat: res.lat, lng: res.lng }} 
-                    onClick={() => setSelectedMarker(res)}
-                  />
-                ))}
-
-                {/* Real Donation Markers */}
-                {filters.surplus && realDonations.filter(d => d.lat && d.lng).map(d => (
-                   <Marker 
-                    key={d.id} 
-                    position={{ lat: d.lat, lng: d.lng }} 
-                    icon="http://maps.google.com/mapfiles/ms/icons/green-dot.png" 
-                    onClick={() => setSelectedMarker(d)}
-                   />
-                ))}
-
-                {/* Info Window for Selected Marker */}
-                {selectedMarker && (
-                  <InfoWindow
-                    position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
-                    onCloseClick={() => setSelectedMarker(null)}
-                  >
-                    <div className="p-2 min-w-[200px]">
-                      <h3 className="font-bold text-gray-800 text-lg mb-1">{selectedMarker.name || selectedMarker.foodType}</h3>
-                      <p className="text-sm text-gray-600 mb-1">🍱 {selectedMarker.foodType || 'Surplus Food'}</p>
-                      <p className="text-sm text-gray-600 mb-2">📦 {selectedMarker.quantity}</p>
-                      <p className="text-xs text-gray-400 mb-3">📍 {selectedMarker.location}</p>
-                      
-                      {selectedMarker.foodType ? (
-                         user?.userType === 'ngo' ? (
-                          <button onClick={() => { setVerifyModal(selectedMarker); setSelectedMarker(null); }} className="w-full bg-primary text-white py-2 rounded-lg text-xs font-bold">Verify & Pickup</button>
-                         ) : (
-                          <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedMarker.location)}`} target="_blank" className="block text-center w-full bg-blue-500 text-white py-2 rounded-lg text-xs font-bold">Navigate</a>
-                         )
-                      ) : (
-                        <a href={`tel:${selectedMarker.phone}`} className="block text-center w-full bg-green-500 text-white py-2 rounded-lg text-xs font-bold">Call Restaurant</a>
-                      )}
-                    </div>
-                  </InfoWindow>
-                )}
-              </GoogleMap>
-            </LoadScript>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-500">
-                <MapPinIcon className="w-16 h-16 mb-4 opacity-20" />
-                <p className="font-bold">Google Maps API Key Missing</p>
-                <p className="text-sm">Please configure NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local</p>
-              </div>
-            )}
           </div>
 
-          {/* 📊 Bottom Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
-              <div>
-                <p className="text-3xl font-black text-gray-800">{realDonations.length + partners.restaurants.length}</p>
-                <p className="text-sm text-gray-500 font-bold uppercase">Surplus Meals</p>
+          {/* Right Column: List */}
+          <div className="lg:col-span-3 space-y-6">
+             {/* Location Filters inside Map View */}
+             <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4 mb-6">
+              <div className="flex flex-col md:flex-row gap-4">
+              <select 
+                value={selectedState} 
+                onChange={(e) => setSelectedState(e.target.value)} 
+                className="flex-1 p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary bg-gray-50"
+              >
+                <option value="">All States</option>
+                {indianStates.map(state => <option key={state} value={state}>{state}</option>)}
+              </select>
+              <input 
+                type="text" 
+                placeholder="Enter City (e.g. Gorakhpur)" 
+                value={selectedCity} 
+                onChange={(e) => setSelectedCity(e.target.value)} 
+                className="flex-1 p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary bg-gray-50" 
+              />
+              <button onClick={handleMapSearch} className="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-green-600 transition-all shadow-md">
+                Search
+              </button>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform">
-                <ArrowRightIcon className="w-6 h-6" />
+
+              {/* Advanced Map Filters */}
+              <div className="flex flex-col md:flex-row items-center gap-6 pt-4 border-t border-gray-100">
+                 <div className="flex-1 w-full">
+                    <div className="flex justify-between text-xs font-bold text-gray-500 mb-2">
+                      <span>Search Radius</span>
+                      <span>{searchRadius} km</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="50" 
+                      value={searchRadius} 
+                      onChange={(e) => setSearchRadius(Number(e.target.value))} 
+                      className="w-full accent-primary h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" checked={vegOnly} onChange={(e) => setVegOnly(e.target.checked)} className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300" />
+                      <span className="text-sm font-bold text-gray-700">Veg Only</span>
+                    </label>
+                 </div>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
-              <div>
-                <p className="text-3xl font-black text-gray-800">{partners.ngos.length}</p>
-                <p className="text-sm text-gray-500 font-bold uppercase">Active NGOs</p>
+
+             <div className="grid grid-cols-1 gap-6">
+                {/* Real Donations First */}
+                {realDonations.map(res => (
+                  <div key={res.id} className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all group flex flex-col sm:flex-row">
+                    <div className="h-40 sm:h-auto sm:w-40 bg-gray-200 relative">
+                      <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=500&q=60" alt="Food" className="w-full h-full object-cover" />
+                      <span className="absolute top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md animate-pulse">Live</span>
+                    </div>
+                    <div className="p-4 flex-1">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="text-lg font-bold text-gray-800">{res.foodType}</h3>
+                        <span className="text-xs font-bold text-gray-400">0.5 km</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-2 flex items-center gap-1"><MapPinIcon className="w-3 h-3" /> {res.location}</p>
+                      
+                      <div className="flex items-center gap-3 mb-3 text-xs text-gray-600">
+                        <div className="flex items-center gap-1"><ClockIcon className="w-3 h-3 text-orange-500" /> 2h left</div>
+                        <div className="flex items-center gap-1"><CheckBadgeIcon className="w-3 h-3 text-blue-500" /> Verified</div>
+                      </div>
+
+                      <div className="flex gap-2">
+                      <button onClick={() => handleViewOnMap(res)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg font-bold hover:bg-blue-100 transition-all text-xs">🗺 Map</button>
+                      <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(res.location)}`} target="_blank" className="flex-1 text-center border border-primary text-primary py-2 rounded-lg font-bold hover:bg-green-50 text-xs">
+                        📍 Navigate
+                      </a>
+                      {user?.userType === 'ngo' && (
+                        <button onClick={() => setVerifyModal(res)} className="flex-1 bg-primary text-white py-2 rounded-lg font-bold shadow-lg hover:bg-green-600 text-xs">
+                          ✅ Verify
+                        </button>
+                      )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filteredRestaurants.map(res => (
+                  <div key={res._id} className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all flex flex-col sm:flex-row">
+                    <div className="h-40 sm:h-auto sm:w-40 bg-gray-200 relative">
+                      <img src={res.photoURL || `https://source.unsplash.com/random/500x300/?restaurant,food&sig=${res._id}`} alt="Restaurant" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-4 flex-1">
+                      <h3 className="text-lg font-bold text-gray-800 mb-1">{res.organizationName || res.name || 'Restaurant'}</h3>
+                      <p className="text-xs text-gray-500 mb-2 flex items-center gap-1"><MapPinIcon className="w-3 h-3" /> {res.address || 'Location not added'}</p>
+                      <div className="bg-orange-50 p-2 rounded-lg mb-3 inline-block">
+                        <p className="text-[10px] font-bold text-orange-600 uppercase">Hours: {res.workingHours || 'N/A'}</p>
+                      </div>
+                      
+                      {res.lat && res.lng ? (
+                        <div className="flex gap-2">
+                          <button onClick={() => handleViewOnMap(res)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg font-bold hover:bg-blue-100 transition-all text-xs">🗺 Map</button>
+                          <a href={`https://www.google.com/maps/dir/?api=1&destination=${res.lat},${res.lng}`} target="_blank" className="flex-1 text-center border border-primary text-primary py-2 rounded-lg font-bold hover:bg-green-50 text-xs flex items-center justify-center gap-1">📍 Navigate</a>
+                        </div>
+                      ) : (
+                        <div className="bg-red-50 p-2 rounded-lg border border-red-100">
+                          <p className="text-red-600 text-[10px] font-bold flex items-center gap-1 mb-1">
+                            <ExclamationTriangleIcon className="w-3 h-3" /> No Map Loc
+                          </p>
+                          <a href={`tel:${res.phone}`} className="flex items-center justify-center gap-2 w-full bg-green-500 text-white py-1.5 rounded-lg text-xs font-bold hover:bg-green-600 transition-all"><PhoneIcon className="w-3 h-3" /> Call</a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
-                <BuildingOfficeIcon className="w-6 h-6" />
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-orange-400 to-red-500 p-6 rounded-3xl shadow-lg text-white flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform" onClick={() => setView('volunteers')}>
-              <div>
-                <p className="text-xl font-bold">Join as Volunteer</p>
-                <p className="text-xs opacity-90">Make a real impact today</p>
-              </div>
-              <UserGroupIcon className="w-8 h-8" />
-            </div>
           </div>
         </div>
 
-        {/* --- 2. LIST VIEW --- */}
+        {/* --- LIST VIEW (Grid Layout) --- */}
         <div className={view === 'list' ? 'grid grid-cols-1 md:grid-cols-3 gap-6' : 'hidden'}>
-          <div className="col-span-full flex justify-end mb-2">
-             <select className="bg-white border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary block p-2.5 outline-none">
-               <option>Sort by: Nearest</option>
-               <option>Sort by: Most Urgent</option>
-               <option>Sort by: Recently Added</option>
-             </select>
-          </div>
-
-          {/* Real Donations First */}
           {realDonations.map(res => (
             <div key={res.id} className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all group">
               <div className="h-40 bg-gray-200 relative">
@@ -407,83 +486,98 @@ export default function FindFood() {
                   <p className="text-xs font-bold text-orange-600 uppercase mb-1">Working Hours</p>
                   <p className="font-medium text-gray-800">{res.workingHours || 'Not specified'}</p>
                 </div>
-                <a href={`tel:${res.phone}`} className="flex items-center justify-center gap-2 w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">
-                  <PhoneIcon className="w-5 h-5" /> Call Restaurant
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* --- 3. NGO FINDER --- */}
-        <div className={view === 'ngos' ? 'block' : 'hidden'}>
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <select onChange={(e) => setFilterState(e.target.value)} className="p-3 border rounded-xl outline-none">
-              <option value="">Select State</option>
-              <option value="Uttar Pradesh">Uttar Pradesh</option>
-              <option value="Bihar">Bihar</option>
-            </select>
-            <input type="text" placeholder="District..." onChange={(e) => setFilterDistrict(e.target.value)} className="p-3 border rounded-xl outline-none"/>
-            <input type="text" placeholder="City/Village..." onChange={(e) => setSearchCity(e.target.value)} className="p-3 border rounded-xl outline-none"/>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredNgos.map(ngo => (
-              <div key={ngo._id} className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex flex-col md:flex-row gap-6 items-center">
-                <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-2xl font-bold text-purple-600">
-                  {ngo.name ? ngo.name[0] : 'N'}
-                </div>
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                    <h3 className="text-xl font-bold text-gray-800">{ngo.organizationName || ngo.name}</h3>
-                    <CheckBadgeIcon className="w-5 h-5 text-blue-500" title="Verified NGO" />
+                
+                {res.lat && res.lng ? (
+                  <div className="flex gap-2">
+                    <button onClick={() => handleViewOnMap(res)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition-all text-sm">🗺 View on Map</button>
+                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${res.lat},${res.lng}`} target="_blank" className="flex-1 text-center border border-primary text-primary py-2 rounded-xl font-bold hover:bg-green-50 text-sm flex items-center justify-center gap-1">📍 Navigate</a>
                   </div>
-                  <p className="text-gray-500 text-sm mb-3">{ngo.address || 'Location not provided'}</p>
-                  <div className="flex items-center justify-center md:justify-start gap-4 text-sm font-medium text-gray-600">
-                    <span>❤️ {ngo.points || 0} Points</span>
-                    <span>⭐ {ngo.rating ? ngo.rating.toFixed(1) : '0.0'} ({ngo.ratingCount || 0})</span>
+                ) : (
+                  <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <p className="text-red-600 text-xs font-bold flex items-center gap-1 mb-2">
+                      <ExclamationTriangleIcon className="w-4 h-4" /> Location not on map
+                    </p>
+                    <p className="text-sm text-gray-700 font-medium mb-1">{res.address || 'Address not available'}</p>
+                    <p className="text-sm text-gray-500 font-mono mb-3">{res.phone}</p>
+                    <a href={`tel:${res.phone}`} className="flex items-center justify-center gap-2 w-full bg-green-500 text-white py-2 rounded-lg text-sm font-bold hover:bg-green-600 transition-all"><PhoneIcon className="w-4 h-4" /> Call Hotel</a>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div>
+            {/* --- 3. NGO FINDER --- */}
+            <div className={view === 'ngos' ? 'block' : 'hidden'}>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 grid grid-cols-1 gap-4 mb-8">
+                <select onChange={(e) => setFilterState(e.target.value)} className="p-3 border rounded-xl outline-none">
+                  <option value="">Select State</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Bihar">Bihar</option>
+                </select>
+                <input type="text" placeholder="District..." onChange={(e) => setFilterDistrict(e.target.value)} className="p-3 border rounded-xl outline-none"/>
+                <input type="text" placeholder="City/Village..." onChange={(e) => setSearchCity(e.target.value)} className="p-3 border rounded-xl outline-none"/>
+              </div>
+              <div className="grid grid-cols-1 gap-6">
+                {filteredNgos.map(ngo => (
+                  <div key={ngo._id} className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex flex-col md:flex-row gap-6 items-center">
+                    <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-2xl font-bold text-purple-600">
+                      {ngo.name ? ngo.name[0] : 'N'}
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                      <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                        <h3 className="text-xl font-bold text-gray-800">{ngo.organizationName || ngo.name}</h3>
+                        <CheckBadgeIcon className="w-5 h-5 text-blue-500" title="Verified NGO" />
+                      </div>
+                      <p className="text-gray-500 text-sm mb-3">{ngo.address || 'Location not provided'}</p>
+                      <div className="flex items-center justify-center md:justify-start gap-4 text-sm font-medium text-gray-600">
+                        <span>❤️ {ngo.points || 0} Points</span>
+                        <span>⭐ {ngo.rating ? ngo.rating.toFixed(1) : '0.0'} ({ngo.ratingCount || 0})</span>
+                      </div>
+                    </div>
+                    <button onClick={() => { setSelectedNgo(ngo); setIsModalOpen(true); setIsSuccess(false); }} className="bg-purple-50 text-purple-600 p-3 rounded-xl hover:bg-purple-100 transition-all">
+                      <ChatBubbleLeftRightIcon className="w-6 h-6" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* --- 4. STORIES --- */}
+            <div className={view === 'stories' ? 'grid grid-cols-1 gap-8' : 'hidden'}>
+              {successStories.map(story => (
+                <div key={story.id} className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all">
+                  <div className="h-48 bg-gray-200">
+                    <img src={`https://source.unsplash.com/random/600x400/?community,food&sig=${story.id}`} alt="Story" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="p-8">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3">{story.title}</h3>
+                    <p className="text-gray-600 mb-6 leading-relaxed">"{story.content}"</p>
+                    <div className="flex justify-between items-center border-t pt-4">
+                      <p className="text-sm font-bold text-primary">By {story.author}</p>
+                      <button className="text-sm font-bold text-gray-400 hover:text-gray-600">Read More →</button>
+                    </div>
                   </div>
                 </div>
-                <button onClick={() => { setSelectedNgo(ngo); setIsModalOpen(true); setIsSuccess(false); }} className="bg-purple-50 text-purple-600 p-3 rounded-xl hover:bg-purple-100 transition-all">
-                  <ChatBubbleLeftRightIcon className="w-6 h-6" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* --- 4. STORIES --- */}
-        <div className={view === 'stories' ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : 'hidden'}>
-          {successStories.map(story => (
-            <div key={story.id} className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all">
-              <div className="h-48 bg-gray-200">
-                <img src={`https://source.unsplash.com/random/600x400/?community,food&sig=${story.id}`} alt="Story" className="w-full h-full object-cover" />
-              </div>
-              <div className="p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">{story.title}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">"{story.content}"</p>
-                <div className="flex justify-between items-center border-t pt-4">
-                  <p className="text-sm font-bold text-primary">By {story.author}</p>
-                  <button className="text-sm font-bold text-gray-400 hover:text-gray-600">Read More →</button>
+            {/* --- 5. VOLUNTEERS (NEW) --- */}
+            <div className={view === 'volunteers' ? 'grid grid-cols-1 gap-6' : 'hidden'}>
+              {partners.volunteers.map(vol => (
+                <div key={vol._id} className="bg-white p-6 rounded-3xl shadow-lg border-l-8 border-orange-500 hover:shadow-xl transition-all">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase">{vol.role || 'Volunteer'}</span>
+                    <span className="text-xs font-bold text-gray-400">{new Date(vol.submittedAt).toLocaleDateString()}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{vol.volunteerName}</h3>
+                  <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><MapPinIcon className="w-4 h-4" /> {vol.city || 'City not specified'}</p>
+                  <p className="text-sm text-gray-500 mb-6 flex items-center gap-2"><UserGroupIcon className="w-4 h-4" /> Vehicle: {vol.vehicle || 'No'}</p>
+                  <button onClick={() => { setSelectedVolunteer(vol); setShowConnectModal(true); }} className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all">Connect</button>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        {/* --- 5. VOLUNTEERS (NEW) --- */}
-        <div className={view === 'volunteers' ? 'grid grid-cols-1 md:grid-cols-3 gap-6' : 'hidden'}>
-          {partners.volunteers.map(vol => (
-            <div key={vol._id} className="bg-white p-6 rounded-3xl shadow-lg border-l-8 border-orange-500 hover:shadow-xl transition-all">
-              <div className="flex justify-between items-start mb-4">
-                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase">{vol.role || 'Volunteer'}</span>
-                <span className="text-xs font-bold text-gray-400">{new Date(vol.submittedAt).toLocaleDateString()}</span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{vol.volunteerName}</h3>
-              <p className="text-sm text-gray-500 mb-1 flex items-center gap-2"><MapPinIcon className="w-4 h-4" /> {vol.city || 'City not specified'}</p>
-              <p className="text-sm text-gray-500 mb-6 flex items-center gap-2"><UserGroupIcon className="w-4 h-4" /> Vehicle: {vol.vehicle || 'No'}</p>
-              <button onClick={() => { setSelectedVolunteer(vol); setShowConnectModal(true); }} className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all">Connect</button>
-            </div>
-          ))}
         </div>
 
         {/* --- MODAL LOGIC (Same as before) --- */}

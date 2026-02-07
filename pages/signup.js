@@ -47,7 +47,7 @@ export default function Signup() {
       
       // Check for Admin Access (Strict check for specific credentials)
       if (email === 'admin@refoodify.com' && password === 'RefoodifyAdmin@2024!') {
-        localStorage.setItem('isAdmin', 'true');
+        data.user.userType = 'admin';
         login(data.user);
         toast.success('Admin Account created!');
         router.push('/profile');

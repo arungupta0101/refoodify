@@ -40,7 +40,7 @@ export default function Leaderboard() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 py-12 px-4">
+      <main className="min-h-screen py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black text-gray-800 mb-4 flex items-center justify-center gap-3">

@@ -170,9 +170,10 @@ export default function Restaurant() {
     try {
       const res = await fetch(`/api/donations?userId=${user.uid}`);
       const data = await res.json();
-      setDonations(data);
+      setDonations(Array.isArray(data) ? data : data.donations || []);
     } catch (error) {
       console.error('Error fetching donations:', error);
+      setDonations([]);
     }
   };
 
@@ -256,7 +257,7 @@ export default function Restaurant() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 pb-20">
+      <main className="min-h-screen pb-20">
         {/* Hero / Header Section */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-16 px-4 relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-16 -mt-16 blur-3xl"></div>

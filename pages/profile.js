@@ -13,7 +13,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ 
-    name: '', address: '', email: '', phone: '', bio: '', photoURL: '',
+    name: '', address: '', city: '', state: '', pincode: '', email: '', phone: '', bio: '', photoURL: '',
     fssai: '', workingHours: '', registrationNumber: '', coverageArea: '', organizationName: ''
   });
   const [donations, setDonations] = useState([]);
@@ -34,13 +34,17 @@ export default function Profile() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  const indianStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry"
+  ];
+
   useEffect(() => {
     if (!user) {
       router.push('/login');
       return;
     }
     fetchProfile();
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true' || user.email === 'admin@refoodify.com');
+    setIsAdmin(user.userType === 'admin' || user.email === 'admin@refoodify.com');
   }, [user]);
 
   const fetchProfile = async () => {
@@ -56,9 +60,24 @@ export default function Profile() {
       if (profileRes.ok) {
         profileData = await profileRes.json();
         setProfile(profileData);
+        
+        // Intelligent Address Parsing
+        // If 'street' is saved, use it. Otherwise, try to extract street from full address if it contains city/state.
+        let streetAddress = profileData.street || profileData.address || '';
+        if (!profileData.street && profileData.address && profileData.city) {
+           // Attempt to strip city and following parts if address was concatenated
+           const cityIndex = profileData.address.lastIndexOf(`, ${profileData.city}`);
+           if (cityIndex !== -1) {
+             streetAddress = profileData.address.substring(0, cityIndex);
+           }
+        }
+
         setEditForm({ 
           name: profileData.name || '', 
-          address: profileData.address || '', 
+          address: streetAddress, 
+          city: profileData.city || '',
+          state: profileData.state || '',
+          pincode: profileData.pincode || '',
           email: profileData.email || '',
           phone: profileData.phone || '',
           bio: profileData.bio || '',
@@ -125,10 +144,24 @@ export default function Profile() {
 
   const handleSave = async () => {
     try {
+      // Construct full address for DB (Street, City, State, Pincode)
+      const fullAddress = [
+        editForm.address,
+        editForm.city,
+        editForm.state,
+        editForm.pincode
+      ].filter(part => part && part.trim() !== '').join(', ');
+
+      const payload = {
+        ...editForm,
+        address: fullAddress, // Save combined address for maps/display
+        street: editForm.address // Save street separately to preserve it
+      };
+
       const res = await fetch(`/api/user/profile?uid=${user.uid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         const updated = await res.json();
@@ -415,7 +448,7 @@ export default function Profile() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 pb-12">
+      <main className="min-h-screen pb-12">
         {/* Cover Banner */}
         <div className="h-48 bg-gradient-to-r from-primary to-green-400"></div>
 
@@ -584,8 +617,25 @@ export default function Profile() {
                       <input type="text" value={editForm.phone} onChange={(e) => setEditForm({...editForm, phone: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl font-medium" placeholder="+91..." />
                     </div>
                     <div>
-                      <label className="text-xs font-bold text-gray-400 uppercase">Address</label>
-                      <textarea value={editForm.address} onChange={(e) => setEditForm({...editForm, address: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl font-medium" rows="3" />
+                      <label className="text-xs font-bold text-gray-400 uppercase">Street Address</label>
+                      <input type="text" value={editForm.address} onChange={(e) => setEditForm({...editForm, address: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl font-medium" placeholder="House/Flat No, Street" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase">City</label>
+                        <input type="text" value={editForm.city} onChange={(e) => setEditForm({...editForm, city: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl font-medium" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase">Pincode</label>
+                        <input type="text" value={editForm.pincode} onChange={(e) => setEditForm({...editForm, pincode: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl font-medium" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-400 uppercase">State</label>
+                      <select value={editForm.state} onChange={(e) => setEditForm({...editForm, state: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl font-medium">
+                        <option value="">Select State</option>
+                        {indianStates.map(state => <option key={state} value={state}>{state}</option>)}
+                      </select>
                     </div>
                     
                     {/* Restaurant Specific Fields */}
@@ -624,7 +674,7 @@ export default function Profile() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase">Address</p>
-                      <p className="font-medium text-gray-700">{displayProfile.address || 'Not provided'}</p>
+                      <p className="font-medium text-gray-700">{[displayProfile.address, displayProfile.city, displayProfile.state, displayProfile.pincode].filter(Boolean).join(', ') || 'Not provided'}</p>
                     </div>
                     <div>
                       <p className="text-xs font-bold text-gray-400 uppercase">Account ID</p>

@@ -398,7 +398,7 @@ export default function Inventory() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-[#f7faf9] py-8 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
             
             {/* 🔝 Header Section */}

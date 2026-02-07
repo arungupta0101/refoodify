@@ -43,11 +43,9 @@ export default function Login() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       
-      // Check for Admin Access (Strict check for specific credentials)
-      if (email === 'admin@refoodify.com' && password === 'RefoodifyAdmin@2024!') {
-        localStorage.setItem('isAdmin', 'true');
-      } else {
-        localStorage.removeItem('isAdmin');
+      // Force Admin Role for specific email (Prototype Fix)
+      if (email === 'admin@refoodify.com') {
+        data.user.userType = 'admin';
       }
 
       login(data.user);
