@@ -137,7 +137,7 @@ export default function Rewards() {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-12 px-4">
+      <main className="min-h-screen pt-24 pb-12 px-4">
         <div className="max-w-5xl mx-auto">
           
           {/* Header */}

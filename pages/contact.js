@@ -5,7 +5,7 @@ export default function Contact() {
   return (
     <>
       <Header />
-      <main className="py-12 px-4 max-w-7xl mx-auto">
+      <main className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">Contact Us</h1>
         <form className="space-y-4">
           <input type="text" placeholder="Name" className="w-full p-3 border rounded" />

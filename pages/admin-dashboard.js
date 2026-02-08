@@ -215,7 +215,7 @@ const fetchData = async () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-24">
         {/* Sidebar */}
         <aside className="w-72 bg-white shadow-xl p-6 hidden md:block border-r border-gray-100">
           <div className="mb-10 px-2">

@@ -131,7 +131,7 @@ export default function Chat() {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-4 px-2 md:px-4">
+      <main className="min-h-screen pt-24 pb-4 px-2 md:px-4">
         <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 h-[85vh] flex flex-col">
           
           {/* Chat Header */}

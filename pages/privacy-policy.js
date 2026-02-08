@@ -5,7 +5,7 @@ export default function PrivacyPolicy() {
   return (
     <>
       <Header />
-      <main className="max-w-4xl mx-auto py-12 px-4 min-h-screen">
+      <main className="max-w-4xl mx-auto pt-24 pb-12 px-4 min-h-screen">
         <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
         <p className="mb-4 text-gray-600">Last updated: {new Date().toLocaleDateString()}</p>
         

@@ -19,7 +19,7 @@ export default function VolunteerTasks() {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-12 px-4">
+      <main className="min-h-screen pt-24 pb-12 px-4">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl font-black text-center text-gray-800 mb-8">🔥 Volunteer Task Marketplace</h1>
           <div className="grid gap-6">

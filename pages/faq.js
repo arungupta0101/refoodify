@@ -62,7 +62,7 @@ const handleManualSubmit = async (e) => {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-12 px-4">
+      <main className="min-h-screen pt-24 pb-12 px-4">
         <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
           {/* Header */}
           <div className="bg-primary p-6 text-white text-center">

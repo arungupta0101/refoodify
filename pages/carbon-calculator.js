@@ -23,7 +23,7 @@ export default function CarbonCalculator() {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-12 px-4">
+      <main className="min-h-screen pt-24 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-black text-gray-800 mb-4 flex items-center justify-center gap-3">

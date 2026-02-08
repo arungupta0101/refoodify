@@ -448,7 +448,7 @@ export default function Profile() {
   return (
     <>
       <Header />
-      <main className="min-h-screen pb-12">
+      <main className="min-h-screen pb-12 pt-24">
         {/* Cover Banner */}
         <div className="h-48 bg-gradient-to-r from-primary to-green-400"></div>
 

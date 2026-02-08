@@ -312,7 +312,7 @@ export default function Donate() {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           
           {/* 🔝 Top Action Tabs Section */}

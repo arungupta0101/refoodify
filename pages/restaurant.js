@@ -257,7 +257,7 @@ export default function Restaurant() {
   return (
     <>
       <Header />
-      <main className="min-h-screen pb-20">
+      <main className="min-h-screen pt-24 pb-20">
         {/* Hero / Header Section */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-16 px-4 relative overflow-hidden">
              <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-16 -mt-16 blur-3xl"></div>

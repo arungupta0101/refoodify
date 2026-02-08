@@ -206,7 +206,7 @@ export default function Community() {
   return (
     <>
       <Header />
-      <main className="min-h-screen py-8 px-4">
+      <main className="min-h-screen pt-24 pb-8 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>

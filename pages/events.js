@@ -36,7 +36,7 @@ export default function Events() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 py-12 px-4">
+      <main className="min-h-screen bg-gray-50 pt-24 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
             <h1 className="text-4xl font-black text-gray-800">Upcoming Events</h1>

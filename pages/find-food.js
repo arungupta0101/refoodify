@@ -229,7 +229,7 @@ export default function FindFood() {
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossOrigin="" />
       </Head>
       <Header />
-      <main className="py-8 px-4 max-w-7xl mx-auto min-h-screen">
+      <main className="pt-24 pb-8 px-4 max-w-7xl mx-auto min-h-screen">
         
         {/* 🔝 Header Section */}
         <div className="text-center mb-8">

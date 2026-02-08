@@ -5,7 +5,7 @@ export default function DataDeletion() {
   return (
     <>
       <Header />
-      <main className="max-w-4xl mx-auto py-12 px-4 min-h-screen">
+      <main className="max-w-4xl mx-auto pt-24 pb-12 px-4 min-h-screen">
         <h1 className="text-3xl font-bold mb-6">User Data Deletion Instructions</h1>
         
         <section className="space-y-4 text-gray-800">
