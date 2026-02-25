@@ -23,7 +23,11 @@ export default async function handler(req, res) {
     return res.status(429).json({ message: 'Too many requests, please try again later.' });
   }
 
-  await dbConnect();
+  try {
+    await dbConnect();
+  } catch (error) {
+    return res.status(503).json({ message: 'Database connection failed' });
+  }
 
   // 2. Server-Side Admin Verification
   // In a real app, use getServerSession(req, res, authOptions) to get the logged-in user.

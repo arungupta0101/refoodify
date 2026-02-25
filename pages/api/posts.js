@@ -37,7 +37,11 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  await dbConnect();
+  try {
+    await dbConnect();
+  } catch (error) {
+    return res.status(503).json({ error: 'Database connection failed' });
+  }
 
   // 1. Rate Limiting
   if (!checkRateLimit(req, 10)) { // Stricter limit for posts
