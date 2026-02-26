@@ -36,6 +36,7 @@ export default function Header() {
   const mainLinks = [
     { name: 'Donate', path: '/donate' },
     { name: 'Find Food', path: '/find-food' },
+    { name: 'Report Issue', path: '/report' },
   ];
 
   const dropdowns = [

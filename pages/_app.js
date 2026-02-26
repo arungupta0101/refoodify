@@ -4,6 +4,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { SessionProvider } from "next-auth/react"
 import { LoadingProvider } from '../contexts/LoadingContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import GeminiChat from '../components/GeminiChat';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   return (
@@ -19,6 +20,7 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
                   {/* Optional: Light Overlay for text readability */}
                   <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
                 </div>
+            <GeminiChat />
             <Component {...pageProps} />
             <Toaster position="top-right" />
           </LoadingProvider>

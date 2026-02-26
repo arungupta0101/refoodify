@@ -21,7 +21,8 @@ import {
   PhoneIcon,
   ChatBubbleLeftRightIcon,
   BoltIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
 import { FaWhatsapp, FaPhone } from 'react-icons/fa';
 
@@ -54,6 +55,10 @@ export default function FindFood() {
   const [mapSearchTriggered, setMapSearchTriggered] = useState(false);
   const [searchRadius, setSearchRadius] = useState(10); // km
   const [vegOnly, setVegOnly] = useState(false);
+
+  // Report System States
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportForm, setReportForm] = useState({ target: null, type: 'Misbehavior', description: '', photo: '' });
   
   // New UI States
   const [showFilters, setShowFilters] = useState(false);
@@ -199,6 +204,51 @@ export default function FindFood() {
     }
   };
 
+  // --- REPORT SYSTEM LOGIC ---
+  const openReportModal = (target) => {
+    if (!user) { toast.error("Please login to report"); return; }
+    setReportForm({ 
+      target: target, 
+      type: 'Misbehavior', 
+      description: '', 
+      photo: '' 
+    });
+    setShowReportModal(true);
+  };
+
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validation: Photo mandatory for Hygiene/Food Quality
+    if ((reportForm.type === 'Hygiene Issue' || reportForm.type === 'Non-Edible Food') && !reportForm.photo) {
+      toast.error("Photo proof is mandatory for Hygiene/Food Quality reports. Please use the camera.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reporterId: user.uid,
+          reporterName: user.name,
+          targetId: reportForm.target._id || reportForm.target.id,
+          targetName: reportForm.target.organizationName || reportForm.target.name || reportForm.target.foodType,
+          issueType: reportForm.type,
+          description: reportForm.description,
+          photoProof: reportForm.photo
+        })
+      });
+
+      if (res.ok) {
+        setShowReportModal(false);
+        toast.success("Report Submitted! Thank you. We will investigate and take action within 1-2 weeks.");
+      }
+    } catch (error) {
+      toast.error("Failed to submit report");
+    }
+  };
+
   const handleViewOnMap = (item) => {
     if (item.lat && item.lng) {
       setCurrentLocation({ lat: item.lat, lng: item.lng });
@@ -318,6 +368,14 @@ export default function FindFood() {
                           ) : (
                             <a href={`https://www.google.com/maps/dir/?api=1&destination=${selectedMarker.lat},${selectedMarker.lng}`} target="_blank" className="block text-center w-full bg-green-500 text-white py-2 rounded-lg text-xs font-bold">Navigate</a>
                           )}
+                          {user && (
+                            <button 
+                              onClick={() => openReportModal(selectedMarker)} 
+                              className="mt-2 w-full bg-red-50 text-red-500 py-2 rounded-lg text-xs font-bold hover:bg-red-100 flex items-center justify-center gap-1"
+                            >
+                              <FlagIcon className="w-3 h-3" /> Report Issue
+                            </button>
+                          )}
                   </div>
                   )}
                 </Map>
@@ -405,6 +463,9 @@ export default function FindFood() {
                           ✅ Verify
                         </button>
                       )}
+                      {user && (
+                        <button onClick={() => openReportModal(res)} className="px-3 bg-red-50 text-red-500 rounded-lg hover:bg-red-100" title="Report Issue"><FlagIcon className="w-4 h-4" /></button>
+                      )}
                       </div>
                     </div>
                   </div>
@@ -425,6 +486,9 @@ export default function FindFood() {
                         <div className="flex gap-2">
                           <button onClick={() => handleViewOnMap(res)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg font-bold hover:bg-blue-100 transition-all text-xs">🗺 Map</button>
                           <a href={`https://www.google.com/maps/dir/?api=1&destination=${res.lat},${res.lng}`} target="_blank" className="flex-1 text-center border border-primary text-primary py-2 rounded-lg font-bold hover:bg-green-50 text-xs flex items-center justify-center gap-1">📍 Navigate</a>
+                          {user && (
+                            <button onClick={() => openReportModal(res)} className="px-3 bg-red-50 text-red-500 rounded-lg hover:bg-red-100" title="Report Issue"><FlagIcon className="w-4 h-4" /></button>
+                          )}
                         </div>
                       ) : (
                         <div className="bg-red-50 p-2 rounded-lg border border-red-100">
@@ -470,6 +534,9 @@ export default function FindFood() {
                     ✅ Verify & Rate
                   </button>
                 )}
+                {user && (
+                  <button onClick={() => openReportModal(res)} className="px-4 bg-red-50 text-red-500 rounded-xl hover:bg-red-100" title="Report Issue"><FlagIcon className="w-5 h-5" /></button>
+                )}
                 </div>
               </div>
             </div>
@@ -491,6 +558,9 @@ export default function FindFood() {
                   <div className="flex gap-2">
                     <button onClick={() => handleViewOnMap(res)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition-all text-sm">🗺 View on Map</button>
                     <a href={`https://www.google.com/maps/dir/?api=1&destination=${res.lat},${res.lng}`} target="_blank" className="flex-1 text-center border border-primary text-primary py-2 rounded-xl font-bold hover:bg-green-50 text-sm flex items-center justify-center gap-1">📍 Navigate</a>
+                    {user && (
+                      <button onClick={() => openReportModal(res)} className="px-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100" title="Report Issue"><FlagIcon className="w-5 h-5" /></button>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-red-50 p-4 rounded-xl border border-red-100">
@@ -539,6 +609,9 @@ export default function FindFood() {
                     <button onClick={() => { setSelectedNgo(ngo); setIsModalOpen(true); setIsSuccess(false); }} className="bg-purple-50 text-purple-600 p-3 rounded-xl hover:bg-purple-100 transition-all">
                       <ChatBubbleLeftRightIcon className="w-6 h-6" />
                     </button>
+                    {user && (
+                      <button onClick={() => openReportModal(ngo)} className="bg-red-50 text-red-500 p-3 rounded-xl hover:bg-red-100 transition-all" title="Report NGO"><FlagIcon className="w-6 h-6" /></button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -674,6 +747,57 @@ export default function FindFood() {
                   <button type="button" onClick={() => setVerifyModal(null)} className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold">Cancel</button>
                   <button type="submit" className="flex-1 bg-primary text-white py-3 rounded-xl font-bold">Submit Verification</button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* --- REPORT ORGANIZATION MODAL --- */}
+        {showReportModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[90] p-4">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full animate-bounceIn max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-red-600 flex items-center gap-2"><FlagIcon className="w-6 h-6" /> Report Issue</h2>
+                <button onClick={() => setShowReportModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">Reporting: <span className="font-bold text-gray-800">{reportForm.target?.organizationName || reportForm.target?.name || 'Organization'}</span></p>
+              
+              <form onSubmit={handleReportSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-500 mb-1">Issue Type</label>
+                  <select value={reportForm.type} onChange={e => setReportForm({...reportForm, type: e.target.value})} className="w-full p-3 border rounded-xl bg-gray-50">
+                    <option value="Misbehavior">Misbehavior / Rude Staff</option>
+                    <option value="Hygiene Issue">Non-Hygienic Environment</option>
+                    <option value="Non-Edible Food">Non-Edible / Bad Food Quality</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-gray-500 mb-1">Description</label>
+                  <textarea value={reportForm.description} onChange={e => setReportForm({...reportForm, description: e.target.value})} className="w-full p-3 border rounded-xl bg-gray-50" placeholder="Describe what happened..." required rows="3" />
+                </div>
+
+                {/* Camera Only Section */}
+                <div className="bg-red-50 p-4 rounded-xl border-2 border-dashed border-red-200 text-center">
+                  <label className="block text-sm font-bold text-red-500 mb-2">Photo Proof (Camera Only)</label>
+                  <p className="text-xs text-gray-500 mb-2">Required for Hygiene/Food Quality issues. Gallery upload is disabled to ensure genuine reports.</p>
+                  
+                  {!isCameraOpen && !reportForm.photo && (
+                    <button type="button" onClick={startCamera} className="bg-red-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-red-600">📸 Open Camera</button>
+                  )}
+                  {isCameraOpen && (
+                    <div className="relative overflow-hidden rounded-xl bg-black">
+                      <video ref={videoRef} autoPlay playsInline className="w-full h-48 object-cover"></video>
+                      <button type="button" onClick={() => { if (videoRef.current && canvasRef.current) { const ctx = canvasRef.current.getContext('2d'); canvasRef.current.width = videoRef.current.videoWidth; canvasRef.current.height = videoRef.current.videoHeight; ctx.drawImage(videoRef.current, 0, 0); setReportForm(prev => ({ ...prev, photo: canvasRef.current.toDataURL('image/jpeg') })); stopCamera(); } }} className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white w-10 h-10 rounded-full border-4 border-gray-300"></button>
+                    </div>
+                  )}
+                  {reportForm.photo && (
+                    <div className="relative"><img src={reportForm.photo} alt="Proof" className="w-full h-40 object-cover rounded-xl" /><button type="button" onClick={() => setReportForm(prev => ({ ...prev, photo: '' }))} className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full">Retake</button></div>
+                  )}
+                </div>
+
+                <button type="submit" className="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 shadow-lg">Submit Report</button>
               </form>
             </div>
           </div>

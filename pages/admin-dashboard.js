@@ -27,13 +27,16 @@ export default function AdminDashboard() {
   }, [activeTab, user]);
 
 const fetchData = async () => {
-    if (activeTab === 'settings' || activeTab === 'security' || activeTab === 'profile' || activeTab === 'map') {
+    if (activeTab === 'settings' || activeTab === 'security' || activeTab === 'profile' || activeTab === 'map' || activeTab === 'rewards') {
       setLoading(false);
       return;
     }
     setLoading(true); 
     try {
-      const res = await fetch(`/api/admin?type=${activeTab}`);
+      let url = `/api/admin?type=${activeTab}`;
+      if (activeTab === 'org_reports') url = '/api/reports'; // Use new API for reports
+      
+      const res = await fetch(url);
       const items = await res.json();
       if (res.ok) {
         setData(items);
@@ -106,6 +109,26 @@ const fetchData = async () => {
     } catch (error) {
       toast.error("Operation failed");
     }
+  };
+
+  const handleReportAction = async (report, isGenuine) => {
+    const feedback = isGenuine 
+      ? "Your report has been verified as GENUINE. We have issued a strict warning to the organization and will monitor them closely. Thank you for helping us maintain quality."
+      : "After investigation, your report was found to be NOT GENUINE. Please ensure future reports are accurate to avoid account suspension.";
+    
+    const status = isGenuine ? 'Resolved' : 'Rejected';
+
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: report._id, status, adminFeedback: feedback })
+      });
+      if (res.ok) {
+        toast.success(`Report marked as ${status}`);
+        fetchData();
+      }
+    } catch (e) { toast.error("Failed to update report"); }
   };
 
   const handleDeleteUser = async (item) => {
@@ -229,7 +252,8 @@ const fetchData = async () => {
               { id: 'ngos', label: '🏢 NGOs', color: 'purple' },
               { id: 'restaurants', label: '🍕 Restaurants', color: 'orange' },
               { id: 'volunteers', label: '🤝 Volunteers', color: 'green' },
-              { id: 'faqs', label: '🐞 Bug Reports', color: 'red' }
+              { id: 'faqs', label: '🐞 Bug Reports', color: 'red' },
+              { id: 'org_reports', label: '🚩 Org Reports', color: 'red' }
             ].map(tab => (
               <button 
                 key={tab.id} 
@@ -258,7 +282,7 @@ const fetchData = async () => {
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-black text-gray-800 capitalize">{activeTab} List</h1>
             <div className="flex gap-2">
-              {['users', 'ngos', 'restaurants', 'volunteers', 'reports'].includes(activeTab) && (
+              {['users', 'ngos', 'restaurants', 'volunteers', 'org_reports'].includes(activeTab) && (
                 <button onClick={exportToCSV} className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all">
                   📥 Export CSV
                 </button>
@@ -364,11 +388,43 @@ const fetchData = async () => {
               )}
 
               {/* --- SETTINGS / SECURITY / REPORTS (Placeholders) --- */}
-              {['settings', 'security', 'reports', 'rewards', 'notifications'].includes(activeTab) && (
+              {['settings', 'security', 'rewards', 'notifications'].includes(activeTab) && (
                 <div className="bg-white p-12 rounded-3xl shadow-sm border border-gray-100 text-center">
                   <div className="text-6xl mb-4">🛠️</div>
                   <h2 className="text-2xl font-bold mb-2">Feature Coming Soon</h2>
                   <p className="text-gray-500">The {activeTab} panel is under development.</p>
+                </div>
+              )}
+
+              {/* --- ORGANIZATION REPORTS VIEW --- */}
+              {activeTab === 'org_reports' && (
+                <div className="grid grid-cols-1 gap-6">
+                  {Array.isArray(data) && data.map(report => (
+                    <div key={report._id} className="bg-white p-6 rounded-3xl shadow-sm border border-red-100 flex flex-col md:flex-row gap-6">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${report.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : report.status === 'Resolved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{report.status}</span>
+                          <span className="text-xs text-gray-400">{new Date(report.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <h3 className="font-bold text-gray-800 text-lg">Target: {report.targetName}</h3>
+                        <p className="text-sm text-red-500 font-bold mb-2">Issue: {report.issueType}</p>
+                        <p className="text-gray-600 text-sm mb-4 bg-gray-50 p-3 rounded-xl">"{report.description}"</p>
+                        <p className="text-xs text-gray-400">Reported by: {report.reporterName} (ID: {report.reporterId})</p>
+                      </div>
+                      <div className="w-full md:w-48 flex flex-col gap-2">
+                        {report.photoProof && (
+                          <button onClick={() => setViewScreenshot(report.photoProof)} className="w-full py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-200">📸 View Proof</button>
+                        )}
+                        {report.status === 'Pending' && (
+                          <>
+                            <button onClick={() => handleReportAction(report, true)} className="w-full py-2 bg-green-500 text-white rounded-xl text-xs font-bold hover:bg-green-600">✅ Verify & Action</button>
+                            <button onClick={() => handleReportAction(report, false)} className="w-full py-2 bg-red-500 text-white rounded-xl text-xs font-bold hover:bg-red-600">❌ Mark False</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {data.length === 0 && <p className="text-center text-gray-400">No organization reports found.</p>}
                 </div>
               )}
 

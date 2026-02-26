@@ -16,6 +16,8 @@ export default function Login() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showFacebookModal, setShowFacebookModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Forgot Password States
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -52,7 +54,8 @@ export default function Login() {
       toast.success('Logged in successfully!');
       router.push('/profile');
     } catch (error) {
-      toast.error(error.message);
+      setErrorMessage(error.message);
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -279,6 +282,28 @@ export default function Login() {
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] transition-all"
             >
               Okay, I'll wait!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowErrorModal(false)}>
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounceIn relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowErrorModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <XMarkIcon className="h-10 w-10 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-800 mb-2">Login Failed</h3>
+            <p className="text-gray-500 mb-8 leading-relaxed">
+              {errorMessage}
+            </p>
+            <button 
+              onClick={() => setShowErrorModal(false)} 
+              className="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-red-600 transition-all"
+            >
+              Try Again
             </button>
           </div>
         </div>
