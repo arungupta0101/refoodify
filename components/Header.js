@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { MapPinIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon, SunIcon, MoonIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon, SunIcon, MoonIcon, ArrowDownTrayIcon, HeartIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -78,45 +78,48 @@ export default function Header() {
     }
   };
 
+  const isActive = (path) => router.pathname === path;
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#39AD48] backdrop-blur-md border-b border-[#39AD48] transition-all duration-300 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/60 bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-950/70">
+      <div className="section-shell">
+        <div className="flex h-20 items-center justify-between gap-4">
           
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-xl group-hover:rotate-12 transition-transform">🌱</div>
-            <span className="text-2xl font-bold text-white tracking-tight">Refoodify</span>
+          <Link href="/" className="flex items-center gap-3 group shrink-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-700 shadow-sm transition-transform duration-300 group-hover:rotate-6 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <HeartIcon className="h-5 w-5" />
+            </div>
+            <div className="leading-tight">
+              <span className="block text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Refoodify</span>
+              <span className="hidden text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:block dark:text-slate-400">Food rescue network</span>
+            </div>
           </Link>
 
-          {/* Desktop Navigation (Hidden on Mobile) */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {/* Main Links */}
+          <nav className="hidden items-center gap-1 lg:flex">
             {mainLinks.map((link) => (
               <Link 
                 key={link.name} 
                 href={link.path} 
-                className={`text-sm font-semibold transition-colors ${router.pathname === link.path ? 'text-white font-bold' : 'text-white/90 hover:text-white'}`}
+                className={`relative rounded-full px-4 py-2 text-sm font-semibold transition-colors ${isActive(link.path) ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}
               >
+                {isActive(link.path) && <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-emerald-500" />}
                 {link.name}
               </Link>
             ))}
 
-            {/* Dropdowns */}
             {dropdowns.map((group) => (
               <div key={group.title} className="relative group">
-                <button className="flex items-center gap-1 text-sm font-semibold text-white/90 hover:text-white transition-colors py-2">
+                <button className="flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white">
                   {group.title}
-                  <ChevronDownIcon className="h-4 w-4 transition-transform group-hover:rotate-180" />
+                  <ChevronDownIcon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
                 </button>
                 
-                {/* Dropdown Menu */}
-                <div className="absolute top-full left-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
+                <div className="absolute left-0 top-full z-50 mt-3 w-64 rounded-2xl border border-slate-200 bg-white/95 p-2 opacity-0 shadow-2xl backdrop-blur-xl invisible transition-all duration-200 translate-y-2 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-800 dark:bg-slate-950/95">
                   {group.items.map((item) => (
                     <Link 
                       key={item.name} 
                       href={item.path}
-                      className="block px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-700 rounded-xl transition-colors"
+                      className="block rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-emerald-300"
                     >
                       {item.name}
                     </Link>
@@ -126,45 +129,43 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Right Icons & Hamburger */}
-          <div className="flex items-center gap-4">
-            {/* Install App Button (Visible only if installable) */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {deferredPrompt && (
-              <button onClick={handleInstallClick} className="hidden lg:flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-sm font-bold transition-all">
-                <ArrowDownTrayIcon className="h-4 w-4" /> App
+              <button onClick={handleInstallClick} className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:bg-emerald-100 lg:flex dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/60">
+                <ArrowDownTrayIcon className="h-4 w-4" /> Install App
               </button>
             )}
 
-            {/* Theme Toggle */}
-            <button onClick={toggleTheme} className="p-2.5 text-white/90 hover:bg-white/10 rounded-full transition-colors">
+            <button onClick={toggleTheme} aria-label="Toggle theme" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-900/60 dark:hover:text-emerald-300">
               {theme === 'dark' ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </button>
 
-            <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-white/20">
+            <div className="hidden items-center gap-3 pl-4 lg:flex">
               {user ? (
                 <div className="flex items-center gap-3">
-                  <Link href="/profile" className="p-1 rounded-full border-2 border-transparent hover:border-white transition-all">
+                  <Link href="/profile" className="rounded-full border border-transparent p-1 transition-all hover:border-emerald-200 dark:hover:border-emerald-700">
                     {user.photoURL ? (
                       <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
                     ) : (
-                      <UserCircleIcon className="h-8 w-8 text-white/90" />
+                      <UserCircleIcon className="h-8 w-8 text-slate-500 dark:text-slate-300" />
                     )}
                   </Link>
-                  <button onClick={logout} className="text-sm font-bold text-white/90 hover:text-red-100 transition-colors">
+                  <button onClick={logout} className="text-sm font-semibold text-slate-600 transition-colors hover:text-rose-500 dark:text-slate-300">
                     Logout
                   </button>
                 </div>
               ) : (
-                <Link href="/login" className="px-6 py-2.5 bg-white text-[#39AD48] hover:bg-gray-100 text-sm font-bold rounded-full transition-all shadow-lg">
+                <Link href="/login" className="premium-button-secondary">
                   Login
+                  <ArrowRightIcon className="h-4 w-4" />
                 </Link>
               )}
             </div>
 
-            {/* Hamburger Button (Only Mobile) */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-white"
+              aria-label="Toggle mobile menu"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             >
               {isMobileMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
             </button>
@@ -172,51 +173,47 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-white shadow-xl border-t border-gray-100 animate-fadeIn absolute w-full left-0 top-full max-h-[90vh] overflow-y-auto">
-          <div className="px-4 pt-4 pb-6 space-y-2">
+        <div className="lg:hidden absolute left-0 top-full max-h-[90vh] w-full overflow-y-auto border-t border-slate-200 bg-white/95 shadow-2xl backdrop-blur-2xl animate-fadeIn dark:border-slate-800 dark:bg-slate-950/95">
+          <div className="px-4 pb-6 pt-4 space-y-2">
             
-            {/* Mobile Install Button */}
             {deferredPrompt && (
-              <button onClick={handleInstallClick} className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl font-bold mb-4 border border-green-200">
+              <button onClick={handleInstallClick} className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-semibold text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <ArrowDownTrayIcon className="h-5 w-5" /> Install Refoodify App
               </button>
             )}
             
-            {/* Main Links Mobile */}
             {mainLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-xl text-base font-bold transition-all ${
-                  router.pathname === link.path ? 'bg-green-50 text-primary' : 'text-gray-700 hover:bg-gray-50'
+                className={`block rounded-2xl px-4 py-3 text-base font-semibold transition-all ${
+                  isActive(link.path) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'
                 }`}
               >
                 {link.name}
               </Link>
             ))}
 
-            {/* Mobile Dropdowns (Accordions) */}
             {dropdowns.map((group) => (
-              <div key={group.title} className="border-b border-gray-100 last:border-0">
+              <div key={group.title} className="border-b border-slate-200 last:border-0 dark:border-slate-800">
                 <button 
                   onClick={() => toggleMobileDropdown(group.title)}
-                  className="w-full flex justify-between items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                  className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
                 >
                   {group.title}
                   <ChevronDownIcon className={`h-4 w-4 transition-transform ${mobileDropdown === group.title ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {mobileDropdown === group.title && (
-                  <div className="pl-4 pb-2 space-y-1 bg-gray-50/50 rounded-b-xl">
+                  <div className="space-y-1 rounded-b-2xl bg-slate-50/80 pb-2 pl-4 dark:bg-slate-900/70">
                     {group.items.map((item) => (
                       <Link
                         key={item.name}
                         href={item.path}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-600 hover:text-primary font-medium"
+                        className="block px-4 py-2 text-sm font-medium text-slate-600 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-300"
                       >
                         {item.name}
                       </Link>
@@ -226,12 +223,11 @@ export default function Header() {
               </div>
             ))}
 
-            {/* Mobile Profile & Auth */}
-            <div className="pt-4 mt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+            <div className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-200 pt-4 dark:border-slate-800">
               <Link 
                 href="/profile"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200 transition-all"
+                className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 transition-all hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
               >
                 <UserCircleIcon className="h-5 w-5" /> Profile
               </Link>
@@ -239,7 +235,7 @@ export default function Header() {
               {user ? (
                 <button 
                   onClick={() => { logout(); setIsMobileMenuOpen(false); }} 
-                  className="px-4 py-3 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-all"
+                  className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 font-semibold text-rose-600 transition-all hover:-translate-y-0.5 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
                 >
                   Logout
                 </button>
@@ -247,7 +243,7 @@ export default function Header() {
                 <Link 
                   href="/login" 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 rounded-xl bg-primary text-white font-bold text-center hover:bg-green-600 transition-all shadow-md"
+                  className="premium-button text-center"
                 >
                   Login
                 </Link>

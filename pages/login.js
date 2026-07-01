@@ -129,157 +129,150 @@ export default function Login() {
   return (
     <>
     <Header />
-    <div className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-br from-green-50 via-orange-50 to-green-100 relative overflow-hidden">
-      {/* Decorative Blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-      <div className="absolute top-0 right-0 w-96 h-96 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-32 left-20 w-96 h-96 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen flex items-center justify-center p-4 pt-28">
+      <div className="relative w-full max-w-6xl">
+        <div className="absolute -top-40 -left-20 w-96 h-96 bg-emerald-200/30 rounded-full blur-3xl -z-10" />
+        <div className="absolute -bottom-40 -right-20 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl -z-10" />
 
-      <div className="max-w-4xl w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row m-4 z-10 relative">
+        <div className="grid overflow-hidden rounded-[2rem] border border-slate-200 bg-white/80 shadow-2xl backdrop-blur-lg lg:grid-cols-2 dark:border-slate-800 dark:bg-slate-950/80">
         
-        {/* Left Side - Image/Branding */}
-        <div className="md:w-1/2 bg-gradient-to-br from-primary to-green-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-20"></div>
-          <div className="relative z-10">
-            <Link href="/" className="text-3xl font-black tracking-tight flex items-center gap-2">
-              <span>🌱</span> Refoodify
-            </Link>
-            <div className="mt-12">
-              <h2 className="text-4xl font-bold mb-4">Welcome Back!</h2>
-              <p className="text-green-100 text-lg leading-relaxed">
-                Join our mission to reduce food waste and feed the hungry. Every login brings us closer to a hunger-free world.
+          <div className="relative hidden overflow-hidden bg-slate-900 p-10 text-white lg:block lg:p-12">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.22),transparent_30%),linear-gradient(180deg,rgba(2,6,23,0.25),rgba(2,6,23,0.9))]" />
+            <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1600&q=80" alt="Food rescue" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+            <div className="relative z-10 flex h-full flex-col justify-between">
+              <Link href="/" className="inline-flex items-center gap-2 text-2xl font-extrabold tracking-tight text-white">
+                <span>Refoodify</span>
+              </Link>
+              <div className="max-w-md py-12">
+                <span className="page-kicker mb-5 border-white/15 bg-white/10 text-white/90">Secure access</span>
+                <h2 className="text-4xl font-black tracking-tight text-white lg:text-5xl">Welcome back.</h2>
+                <p className="mt-5 text-base leading-7 text-slate-200 lg:text-lg">
+                  Continue managing donations, food rescue operations, and community impact from a trusted control center.
+                </p>
+              </div>
+              <p className="text-sm text-slate-300">© {new Date().getFullYear()} Refoodify. Designed for modern food rescue teams.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-center p-8 sm:p-10 lg:p-12">
+            <div className="mb-8 text-center md:text-left">
+              <h3 className="section-heading text-3xl font-bold">Welcome Back</h3>
+              <p className="section-copy mt-3 text-base">Enter your details to continue with the platform.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="field-label">Email Address</label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <EnvelopeIcon className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    className="premium-input py-3.5 pl-11 pr-4"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="field-label">Password</label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <LockClosedIcon className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="premium-input py-3.5 pl-11 pr-11"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                  </button>
+                </div>
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => setShowForgotModal(true)} className="text-sm font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200">
+                    Forgot password?
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="premium-button w-full"
+              >
+                {isLoading ? (
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                ) : (
+                  'Sign In'
+                )}
+              </button>
+            </form>
+
+            <div className="my-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+              <span className="text-sm font-medium text-slate-400">Or continue with</span>
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => handleSocialLogin('Google')}
+                className="premium-button-secondary w-full"
+              >
+                <FaGoogle className="text-red-500" />
+                Google
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSocialLogin('Facebook')}
+                className="premium-button-secondary w-full"
+              >
+                <FaFacebook className="text-blue-600" />
+                Facebook
+              </button>
+            </div>
+
+            <div className="mt-8 text-center">
+              <p className="text-slate-500 dark:text-slate-400">
+                Don't have an account?{' '}
+                <Link href="/signup" className="font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200">
+                  Create Account
+                </Link>
               </p>
             </div>
-          </div>
-          <div className="relative z-10 mt-12">
-            <p className="text-sm text-green-200">© 2024 Refoodify Inc.</p>
-          </div>
-        </div>
-
-        {/* Right Side - Form */}
-        <div className="md:w-1/2 p-8 md:p-12 bg-white flex flex-col justify-center">
-          <div className="text-center md:text-left mb-8">
-            <h3 className="text-2xl font-bold text-gray-800">Sign In</h3>
-            <p className="text-gray-500 mt-2">Please enter your details to continue.</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-600 ml-1">Email Address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="email"
-                  required
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-100 rounded-xl focus:border-primary focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium text-gray-700 bg-gray-50 focus:bg-white"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-600 ml-1">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <LockClosedIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  className="w-full pl-10 pr-10 py-3 border-2 border-gray-100 rounded-xl focus:border-primary focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-medium text-gray-700 bg-gray-50 focus:bg-white"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={() => setShowForgotModal(true)} className="text-xs font-bold text-primary hover:text-green-700">Forgot Password?</button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-primary to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500 font-medium">Or continue with</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('Google')}
-              className="flex items-center justify-center gap-2 w-full p-3 border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-200 transition-all group"
-            >
-              <FaGoogle className="text-red-500 text-xl group-hover:scale-110 transition-transform" />
-              <span>Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('Facebook')}
-              className="flex items-center justify-center gap-2 w-full p-3 border-2 border-gray-100 rounded-xl font-bold text-gray-600 hover:bg-gray-50 hover:border-gray-200 transition-all group"
-            >
-              <FaFacebook className="text-blue-600 text-xl group-hover:scale-110 transition-transform" />
-              <span>Facebook</span>
-            </button>
-          </div>
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-500 font-medium">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-primary font-bold hover:underline">
-                Create Account
-              </Link>
-            </p>
           </div>
         </div>
       </div>
 
       {/* Facebook Coming Soon Modal */}
       {showFacebookModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowFacebookModal(false)}>
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounceIn relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowFacebookModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
-            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-fadeIn" onClick={() => setShowFacebookModal(false)}>
+          <div className="premium-card relative w-full max-w-sm p-8 text-center animate-bounceIn" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowFacebookModal(false)} className="absolute right-4 top-4 text-2xl font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/40">
               <FaFacebook className="text-blue-600 text-5xl" />
             </div>
-            <h3 className="text-2xl font-black text-gray-800 mb-2">Coming Soon! 🚀</h3>
-            <p className="text-gray-500 mb-8 leading-relaxed">
+            <h3 className="mb-2 text-2xl font-black text-slate-900 dark:text-white">Coming Soon! 🚀</h3>
+            <p className="mb-8 leading-relaxed text-slate-500 dark:text-slate-400">
               We are putting the finishing touches on Facebook Login. It will be available in the next update!
             </p>
             <button 
               onClick={() => setShowFacebookModal(false)} 
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] transition-all"
+              className="premium-button w-full bg-blue-600 hover:bg-blue-700"
             >
               Okay, I'll wait!
             </button>
@@ -289,19 +282,19 @@ export default function Login() {
 
       {/* Error Modal */}
       {showErrorModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowErrorModal(false)}>
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounceIn relative" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowErrorModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
-            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-fadeIn" onClick={() => setShowErrorModal(false)}>
+          <div className="premium-card relative w-full max-w-sm p-8 text-center animate-bounceIn" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowErrorModal(false)} className="absolute right-4 top-4 text-2xl font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/40">
               <XMarkIcon className="h-10 w-10 text-red-500" />
             </div>
-            <h3 className="text-2xl font-black text-gray-800 mb-2">Login Failed</h3>
-            <p className="text-gray-500 mb-8 leading-relaxed">
+            <h3 className="mb-2 text-2xl font-black text-slate-900 dark:text-white">Login Failed</h3>
+            <p className="mb-8 leading-relaxed text-slate-500 dark:text-slate-400">
               {errorMessage}
             </p>
             <button 
               onClick={() => setShowErrorModal(false)} 
-              className="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-red-600 transition-all"
+              className="premium-button w-full bg-red-600 hover:bg-red-700"
             >
               Try Again
             </button>
@@ -311,20 +304,20 @@ export default function Login() {
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-bounceIn relative">
-            <button onClick={() => { setShowForgotModal(false); setForgotStep(1); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XMarkIcon className="w-6 h-6" /></button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-fadeIn">
+          <div className="premium-card relative w-full max-w-md p-8 animate-bounceIn" onClick={e => e.stopPropagation()}>
+            <button onClick={() => { setShowForgotModal(false); setForgotStep(1); }} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><XMarkIcon className="h-6 w-6" /></button>
             
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Reset Password</h3>
-            <p className="text-gray-500 mb-6 text-sm">Follow the steps to recover your account.</p>
+            <h3 className="mb-2 text-2xl font-bold text-slate-900 dark:text-white">Reset Password</h3>
+            <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">Follow the steps to recover your account.</p>
 
             {forgotStep === 1 && (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-600">Enter Email</label>
-                  <input type="email" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50" placeholder="you@example.com" />
+                  <label className="field-label">Enter Email</label>
+                  <input type="email" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} className="premium-input px-4 py-3" placeholder="you@example.com" />
                 </div>
-                <button type="submit" disabled={isLoading} className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-green-600 transition-all">
+                  <button type="submit" disabled={isLoading} className="premium-button w-full">
                   {isLoading ? 'Sending...' : 'Send OTP'}
                 </button>
               </form>
@@ -333,27 +326,27 @@ export default function Login() {
             {forgotStep === 2 && (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-600">Enter OTP</label>
-                  <input type="text" required value={otp} onChange={e => setOtp(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50 text-center tracking-widest text-xl" placeholder="123456" />
+                  <label className="field-label">Enter OTP</label>
+                  <input type="text" required value={otp} onChange={e => setOtp(e.target.value)} className="premium-input px-4 py-3 text-center text-xl tracking-[0.35em]" placeholder="123456" />
                 </div>
-                <button type="submit" disabled={isLoading} className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-green-600 transition-all">
+                  <button type="submit" disabled={isLoading} className="premium-button w-full">
                   {isLoading ? 'Verifying...' : 'Verify OTP'}
                 </button>
-                <button type="button" onClick={() => setForgotStep(1)} className="w-full text-gray-500 text-sm font-bold mt-2">Back</button>
+                  <button type="button" onClick={() => setForgotStep(1)} className="mt-2 w-full text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Back</button>
               </form>
             )}
 
             {forgotStep === 3 && (
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div>
-                  <label className="text-sm font-bold text-gray-600">New Password</label>
-                  <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50" placeholder="••••••••" />
+                  <label className="field-label">New Password</label>
+                  <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} className="premium-input px-4 py-3" placeholder="••••••••" />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-gray-600">Confirm Password</label>
-                  <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50" placeholder="••••••••" />
+                  <label className="field-label">Confirm Password</label>
+                  <input type="password" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="premium-input px-4 py-3" placeholder="••••••••" />
                 </div>
-                <button type="submit" disabled={isLoading} className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-green-600 transition-all">
+                  <button type="submit" disabled={isLoading} className="premium-button w-full">
                   {isLoading ? 'Resetting...' : 'Reset Password'}
                 </button>
               </form>
@@ -364,21 +357,6 @@ export default function Login() {
       )}
       
       <style jsx>{`
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
         @keyframes bounceIn {
           0% { opacity: 0; transform: scale(0.3); }
           50% { opacity: 1; transform: scale(1.05); }
@@ -388,6 +366,8 @@ export default function Login() {
         .animate-bounceIn {
           animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
       `}</style>
     </div>
     </>

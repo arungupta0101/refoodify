@@ -2,19 +2,18 @@ import { motion } from 'framer-motion';
 
 export default function WelcomeScreen({ onComplete }) {
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-black">
-      {/* Background Image with Zoom Effect */}
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-slate-950">
       <motion.div 
         className="absolute inset-0 z-0"
         initial={{ scale: 1.2, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80 z-10" />
+        <div className="absolute inset-0 z-10 bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.18),transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.55),rgba(2,6,23,0.88))]" />
         <img 
           src="https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=2070&auto=format&fit=crop" 
           alt="Community Food" 
-          className="w-full h-full object-cover opacity-60"
+          className="h-full w-full object-cover opacity-50"
         />
       </motion.div>
       
@@ -24,7 +23,7 @@ export default function WelcomeScreen({ onComplete }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
         >
-          <p className="text-xl md:text-2xl text-green-400 font-medium tracking-widest uppercase mb-4">
+          <p className="mb-4 text-xl font-semibold uppercase tracking-[0.25em] text-emerald-300 md:text-2xl">
             Welcome to
           </p>
         </motion.div>
@@ -33,7 +32,7 @@ export default function WelcomeScreen({ onComplete }) {
           initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
           transition={{ duration: 1, delay: 0.8, ease: "circOut" }}
-          className="text-7xl md:text-9xl font-black text-white mb-6 tracking-tighter"
+          className="mb-6 text-6xl font-black tracking-tighter text-white md:text-8xl"
         >
           Refoodify
         </motion.h1>
@@ -42,16 +41,16 @@ export default function WelcomeScreen({ onComplete }) {
           initial={{ width: 0 }}
           animate={{ width: "100px" }}
           transition={{ duration: 0.8, delay: 1.2 }}
-          className="h-1.5 bg-green-500 mx-auto mb-10 rounded-full"
+          className="mx-auto mb-10 h-1.5 rounded-full bg-emerald-400"
         />
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 1.5 }}
-          className="text-2xl md:text-4xl text-gray-200 font-light italic mb-16 leading-relaxed"
+          className="mb-16 text-2xl font-light italic leading-relaxed text-slate-200 md:text-4xl"
         >
-          "Save Food, <span className="text-green-400 font-semibold">Save Lives</span>"
+          "Save Food, <span className="font-semibold text-emerald-300">Save Lives</span>"
         </motion.p>
 
         <motion.button
@@ -61,12 +60,12 @@ export default function WelcomeScreen({ onComplete }) {
           whileHover={{ scale: 1.05, backgroundColor: "#22c55e" }}
           whileTap={{ scale: 0.95 }}
           onClick={onComplete}
-          className="group relative px-12 py-5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xl font-bold rounded-full overflow-hidden transition-all hover:border-green-500 hover:shadow-[0_0_30px_rgba(34,197,94,0.5)]"
+          className="group relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 px-8 py-4 text-lg font-semibold text-white backdrop-blur-xl transition-all hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-white/15"
         >
           <span className="relative z-10 flex items-center gap-3">
             Get Started <span className="group-hover:translate-x-1 transition-transform">→</span>
           </span>
-          <div className="absolute inset-0 bg-green-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-emerald-500 opacity-0 transition-opacity duration-300 group-hover:opacity-20"></div>
         </motion.button>
       </div>
     </div>

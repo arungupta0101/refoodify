@@ -4,6 +4,24 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var storedTheme = window.localStorage.getItem('theme');
+                  var systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var theme = storedTheme === 'light' || storedTheme === 'dark'
+                    ? storedTheme
+                    : (systemPrefersDark ? 'dark' : 'light');
+                  var root = document.documentElement;
+                  root.classList.toggle('dark', theme === 'dark');
+                  root.style.colorScheme = theme;
+                } catch (error) {}
+              })();
+            `,
+          }}
+        />
         <link rel="icon" href="/refoodify.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#22c55e" />

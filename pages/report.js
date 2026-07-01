@@ -145,38 +145,39 @@ export default function Report() {
   return (
     <>
       <Header />
-      <main className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-          <div className="bg-red-50 p-8 border-b border-red-100 text-center">
-            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <main className="min-h-screen pt-24 pb-20">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300">
               <FlagIcon className="w-8 h-8" />
             </div>
-            <h1 className="text-3xl font-black text-gray-800 mb-2">Report an Issue</h1>
-            <p className="text-gray-600">Help us maintain quality and safety by reporting issues with NGOs or Restaurants.</p>
+            <p className="page-kicker justify-center mb-4">Safety Report</p>
+            <h1 className="section-heading">Report an Issue</h1>
+            <p className="section-copy mt-4">Help us maintain quality and safety by reporting issues with NGOs or restaurants.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="premium-card p-8 space-y-6">
             
             {/* 1. Select Organization Type */}
             <div>
-              <label className="block text-sm font-bold text-gray-500 mb-2">I want to report a:</label>
+              <label className="field-label">I want to report a:</label>
               <div className="flex gap-4">
-                <button type="button" onClick={() => { setOrgType('ngo'); setSelectedOrgId(''); setSearchArea(''); }} className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${orgType === 'ngo' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-100 text-gray-500 hover:bg-gray-50'}`}>🏢 NGO</button>
-                <button type="button" onClick={() => { setOrgType('restaurant'); setSelectedOrgId(''); setSearchArea(''); }} className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${orgType === 'restaurant' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-100 text-gray-500 hover:bg-gray-50'}`}>🍕 Restaurant</button>
+                <button type="button" onClick={() => { setOrgType('ngo'); setSelectedOrgId(''); setSearchArea(''); }} className={`premium-card flex-1 py-3 font-semibold transition-all ${orgType === 'ngo' ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300' : 'text-slate-500 hover:-translate-y-0.5 dark:text-slate-400'}`}>🏢 NGO</button>
+                <button type="button" onClick={() => { setOrgType('restaurant'); setSelectedOrgId(''); setSearchArea(''); }} className={`premium-card flex-1 py-3 font-semibold transition-all ${orgType === 'restaurant' ? 'border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300' : 'text-slate-500 hover:-translate-y-0.5 dark:text-slate-400'}`}>🍕 Restaurant</button>
               </div>
             </div>
 
             {/* 2. Filter by Area */}
             <div>
-              <label className="block text-sm font-bold text-gray-500 mb-1">Filter by Area / City</label>
-              <input type="text" value={searchArea} onChange={e => setSearchArea(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 ring-red-200 outline-none" placeholder="e.g. Gorakhpur, Civil Lines..." />
+              <label className="field-label">Filter by Area / City</label>
+              <input type="text" value={searchArea} onChange={e => setSearchArea(e.target.value)} className="premium-input px-4 py-3" placeholder="e.g. Gorakhpur, Civil Lines..." />
             </div>
 
             {/* 3. Select Organization Dropdown */}
             <div>
-              <label className="block text-sm font-bold text-gray-500 mb-1">Select Organization</label>
+              <label className="field-label">Select Organization</label>
               <select 
-                className="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 ring-red-200 outline-none"
+                className="premium-select px-4 py-3"
                 onChange={handleOrgSelect}
                 value={selectedOrgId}
               >
@@ -192,13 +193,13 @@ export default function Report() {
 
             {/* Manual Name Input (Only if 'manual' or no ID selected yet but typing allowed) */}
             <div className={selectedOrgId && selectedOrgId !== 'manual' ? 'hidden' : 'block'}>
-              <label className="block text-sm font-bold text-gray-500 mb-1">Organization Name (Manual Entry)</label>
-              <input type="text" required={!selectedOrgId || selectedOrgId === 'manual'} value={reportForm.targetName} onChange={e => setReportForm({...reportForm, targetName: e.target.value})} className="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 ring-red-200 outline-none" placeholder="e.g. Tasty Bites" />
+              <label className="field-label">Organization Name (Manual Entry)</label>
+              <input type="text" required={!selectedOrgId || selectedOrgId === 'manual'} value={reportForm.targetName} onChange={e => setReportForm({...reportForm, targetName: e.target.value})} className="premium-input px-4 py-3" placeholder="e.g. Tasty Bites" />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-500 mb-1">Issue Type</label>
-              <select value={reportForm.type} onChange={e => setReportForm({...reportForm, type: e.target.value})} className="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 ring-red-200 outline-none">
+              <label className="field-label">Issue Type</label>
+              <select value={reportForm.type} onChange={e => setReportForm({...reportForm, type: e.target.value})} className="premium-select px-4 py-3">
                 <option value="Misbehavior">Misbehavior / Rude Staff</option>
                 <option value="Hygiene Issue">Non-Hygienic Environment</option>
                 <option value="Non-Edible Food">Non-Edible / Bad Food Quality</option>
@@ -207,38 +208,38 @@ export default function Report() {
             </div>
             
             <div>
-              <label className="block text-sm font-bold text-gray-500 mb-1">Description</label>
-              <textarea required value={reportForm.description} onChange={e => setReportForm({...reportForm, description: e.target.value})} className="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 ring-red-200 outline-none h-32" placeholder="Describe what happened..." />
+              <label className="field-label">Description</label>
+              <textarea required value={reportForm.description} onChange={e => setReportForm({...reportForm, description: e.target.value})} className="premium-textarea h-32 px-4 py-3" placeholder="Describe what happened..." />
             </div>
 
-            <div className="bg-red-50 p-6 rounded-xl border-2 border-dashed border-red-200 text-center">
-              <label className="block text-sm font-bold text-red-500 mb-2">Photo Proof (Camera Only)</label>
-              <p className="text-xs text-gray-500 mb-4">Required for Hygiene/Food Quality issues.</p>
+            <div className="rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/60 p-6 text-center dark:border-rose-900/50 dark:bg-rose-950/20">
+              <label className="mb-2 block text-sm font-bold text-rose-600 dark:text-rose-300">Photo proof (camera only)</label>
+              <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">Required for hygiene and food quality issues.</p>
               
               {!isCameraOpen && !reportForm.photo && (
-                <button type="button" onClick={startCamera} className="bg-red-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-red-600 flex items-center gap-2 mx-auto">
+                <button type="button" onClick={startCamera} className="premium-button mx-auto bg-rose-600 hover:bg-rose-700">
                   <CameraIcon className="w-5 h-5" /> Open Camera
                 </button>
               )}
 
               {isCameraOpen && (
-                <div className="relative overflow-hidden rounded-xl bg-black max-w-sm mx-auto">
+                <div className="relative mx-auto max-w-sm overflow-hidden rounded-2xl bg-black">
                   <video ref={videoRef} autoPlay playsInline className="w-full h-64 object-cover"></video>
-                  <button type="button" onClick={capturePhoto} className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white w-12 h-12 rounded-full border-4 border-gray-300 flex items-center justify-center"></button>
-                  <button type="button" onClick={stopCamera} className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full"><XMarkIcon className="w-6 h-6" /></button>
+                  <button type="button" onClick={capturePhoto} className="absolute bottom-4 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border-4 border-slate-200 bg-white"></button>
+                  <button type="button" onClick={stopCamera} className="absolute right-2 top-2 rounded-full bg-black/50 p-1 text-white"><XMarkIcon className="w-6 h-6" /></button>
                 </div>
               )}
 
               {reportForm.photo && (
-                <div className="relative max-w-sm mx-auto">
-                  <img src={reportForm.photo} alt="Proof" className="w-full h-48 object-cover rounded-xl" />
-                  <button type="button" onClick={() => setReportForm(prev => ({ ...prev, photo: '' }))} className="absolute top-2 right-2 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-md">Retake</button>
+                <div className="relative mx-auto max-w-sm">
+                  <img src={reportForm.photo} alt="Proof" className="h-48 w-full rounded-2xl object-cover" />
+                  <button type="button" onClick={() => setReportForm(prev => ({ ...prev, photo: '' }))} className="absolute right-2 top-2 rounded-full bg-rose-600 px-3 py-1 text-xs font-bold text-white shadow-md">Retake</button>
                 </div>
               )}
               <canvas ref={canvasRef} className="hidden"></canvas>
             </div>
 
-            <button type="submit" className="w-full bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-200 transition-all text-lg">
+            <button type="submit" className="premium-button w-full bg-rose-600 hover:bg-rose-700">
               Submit Report
             </button>
           </form>

@@ -17,6 +17,7 @@
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "leaflet": "^1.9.4",
+    "lucide-react": "^1.22.0",
     "mongodb": "^5.9.2",
     "mongoose": "^9.1.4",
     "next": "^14.0.0",

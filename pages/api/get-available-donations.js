@@ -1,5 +1,6 @@
 import dbConnect from '../../lib/mongodb';
 import { Donation, User } from '../../lib/models';
+import mongoose from 'mongoose';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -18,15 +19,17 @@ export default async function handler(req, res) {
     });
 
     // Fetch available donations
-    let query = { 
+    let query = {
       $or: [
         { status: { $in: ['pending', 'available'] } },
-        { status: 'accepted', ngoId: ngoId } // Show accepted ones only to the NGO who accepted them
+        // Show accepted ones only to the NGO who accepted them
+        ...(ngoId ? [{ status: 'accepted', ngoId: new mongoose.Types.ObjectId(ngoId) }] : [])
       ]
     };
     
     // Filter out donations ignored by this NGO
     if (ngoId) {
+      // Ensure ignoredBy is compared against ObjectId
       query.ignoredBy = { $ne: ngoId };
     }
 
@@ -37,7 +40,7 @@ export default async function handler(req, res) {
       const obj = doc.toObject();
       let donorName = 'Restaurant';
       if (obj.donorId) {
-        const donor = await User.findById(obj.donorId);
+        const donor = await User.findById(obj.donorId).select('name organizationName').lean();
         if (donor) donorName = donor.organizationName || donor.name || 'Restaurant';
       }
       return {

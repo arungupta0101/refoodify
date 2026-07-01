@@ -138,43 +138,44 @@ export default function Rewards() {
     <>
       <Header />
       <main className="min-h-screen pt-24 pb-12 px-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="section-shell max-w-5xl mx-auto">
           
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-black text-gray-800 mb-2">Refoodify Rewards</h1>
-            <p className="text-gray-600">Earn points, unlock badges, and get recognized for your impact.</p>
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <p className="page-kicker justify-center">Recognition program</p>
+            <h1 className="section-heading mb-3">Refoodify Rewards</h1>
+            <p className="section-copy mx-auto">Earn points, unlock badges, and get recognized for your impact.</p>
           </div>
 
           {/* Points & Level Card */}
-          <div className="bg-white rounded-[2rem] shadow-xl p-8 mb-10 border border-gray-100 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-yellow-400"></div>
+          <div className="premium-card p-8 mb-10 relative overflow-hidden">
+            <div className="absolute top-0 left-0 h-1.5 w-full bg-gradient-to-r from-primary via-emerald-400 to-amber-400"></div>
             <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               
               <div className="text-center md:text-left">
-                <p className="text-gray-500 font-bold uppercase text-xs tracking-widest mb-1">Current Balance</p>
+                <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-[0.3em] mb-1">Current Balance</p>
                 <h2 className="text-5xl font-black text-primary flex items-center gap-2 justify-center md:justify-start">
                   {points} <span className="text-lg text-gray-400 font-medium">PTS</span>
                 </h2>
-                <div className={`mt-2 inline-flex items-center gap-2 px-4 py-1 rounded-full text-sm font-bold ${currentLevel.bg} ${currentLevel.color}`}>
+                <div className={`mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${currentLevel.bg} ${currentLevel.color}`}>
                   <span>{currentLevel.icon}</span> {currentLevel.name}
                 </div>
               </div>
 
               <div className="flex-1 w-full max-w-md">
-                <div className="flex justify-between text-sm font-bold text-gray-500 mb-2">
+                <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400 mb-2">
                   <span>Progress to Next Level</span>
                   <span>{points} / {currentLevel.next}</span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
-                  <div className="bg-gradient-to-r from-primary to-yellow-400 h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
+                <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden dark:bg-slate-800">
+                  <div className="bg-gradient-to-r from-primary to-amber-400 h-full rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
                 </div>
-                <p className="text-xs text-gray-400 mt-2 text-right">Earn {currentLevel.next - points} more points to level up!</p>
+                <p className="text-xs text-slate-400 mt-2 text-right">Earn {currentLevel.next - points} more points to level up!</p>
               </div>
 
               <button 
                 onClick={isCertUnlocked ? downloadCertificate : () => toast.error(`Reach ${minCertPoints} points to unlock certificate!`)} 
-                className={`px-6 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2 ${isCertUnlocked ? 'bg-gray-900 text-white hover:bg-black' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                className={`premium-button px-6 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${isCertUnlocked ? 'bg-gradient-to-r from-slate-900 to-slate-700 text-white shadow-[0_18px_45px_rgba(15,23,42,0.28)] hover:translate-y-[-1px]' : 'bg-slate-200 text-slate-500 cursor-not-allowed dark:bg-slate-800 dark:text-slate-400'}`}
               >
                 {isCertUnlocked ? <DocumentArrowDownIcon className="w-5 h-5" /> : <LockClosedIcon className="w-5 h-5" />} Certificate
               </button>
@@ -182,12 +183,12 @@ export default function Rewards() {
           </div>
 
           {/* Tabs */}
-          <div className="flex justify-center gap-4 mb-8">
+          <div className="flex flex-wrap justify-center gap-3 mb-8 rounded-[1.75rem] border border-white/70 bg-white/75 p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/50">
             {['status', 'rules', 'badges'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-full font-bold capitalize transition-all ${activeTab === tab ? 'bg-primary text-white shadow-lg' : 'bg-white text-gray-500 hover:bg-gray-100'}`}
+                className={`px-6 py-2 rounded-full font-bold capitalize transition-all ${activeTab === tab ? 'bg-gradient-to-r from-primary to-emerald-500 text-white shadow-[0_18px_45px_rgba(34,197,94,0.28)]' : 'bg-transparent text-slate-500 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-white/10'}`}
               >
                 {tab}
               </button>
@@ -200,21 +201,21 @@ export default function Rewards() {
               {currentTiers.map((tier, index) => {
                 const isUnlocked = points >= tier.points;
                 return (
-                  <div key={index} className={`bg-white p-6 rounded-3xl shadow-md border relative overflow-hidden ${isUnlocked ? 'border-green-200' : 'border-gray-200 opacity-75'}`}>
+                  <div key={index} className={`premium-card p-6 relative overflow-hidden ${isUnlocked ? 'border-emerald-200/70' : 'border-white/50 opacity-80 dark:border-white/10'}`}>
                     {!isUnlocked && (
-                      <div className="absolute inset-0 bg-gray-50/50 backdrop-blur-[1px] flex items-center justify-center z-10">
-                        <div className="bg-white p-3 rounded-full shadow-lg flex items-center gap-2">
-                          <LockClosedIcon className="w-5 h-5 text-gray-400" />
-                          <span className="text-xs font-bold text-gray-500">Locked ({tier.points} pts)</span>
+                      <div className="absolute inset-0 bg-white/55 backdrop-blur-sm flex items-center justify-center z-10 dark:bg-slate-950/45">
+                        <div className="bg-white/90 p-3 rounded-full shadow-lg flex items-center gap-2 dark:bg-slate-900/90">
+                          <LockClosedIcon className="w-5 h-5 text-slate-400" />
+                          <span className="text-xs font-bold text-slate-500">Locked ({tier.points} pts)</span>
                         </div>
                       </div>
                     )}
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl mb-4 ${tier.color}`}>
                       {tier.icon}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{tier.level} Level</h3>
-                    <p className="text-sm text-gray-500 mb-4">{tier.points}+ Points</p>
-                    <ul className="text-sm text-gray-600 space-y-2">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{tier.level} Level</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{tier.points}+ Points</p>
+                    <ul className="text-sm text-slate-600 space-y-2 dark:text-slate-300">
                       {tier.rewards.map((r, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <span className="text-green-500">✔</span> {r}
@@ -222,7 +223,7 @@ export default function Rewards() {
                       ))}
                     </ul>
                     {isUnlocked && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="mt-4 pt-4 border-t border-white/70 dark:border-white/10">
                         <span className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">Unlocked</span>
                       </div>
                     )}
@@ -233,18 +234,18 @@ export default function Rewards() {
           )}
 
           {activeTab === 'rules' && (
-            <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100">
+            <div className="premium-card overflow-hidden">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold dark:bg-slate-900/70 dark:text-slate-400">
                   <tr>
                     <th className="p-5">Action</th>
                     <th className="p-5 text-right">Points</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                   {currentRules.map((rule, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50/50">
-                      <td className="p-5 font-medium text-gray-700">{rule.action}</td>
+                    <tr key={idx} className="hover:bg-slate-50/70 dark:hover:bg-white/5">
+                      <td className="p-5 font-medium text-slate-700 dark:text-slate-200">{rule.action}</td>
                       <td className="p-5 text-right font-bold text-primary">{rule.points}</td>
                     </tr>
                   ))}
@@ -261,10 +262,10 @@ export default function Rewards() {
                 { name: 'Eco Warrior', icon: '🌍', desc: '500kg Food Saved' },
                 { name: 'Crisis Champ', icon: '🚨', desc: '10 Emergency Helps' },
               ].map((badge, i) => (
-                <div key={i} className={`p-6 rounded-2xl text-center border-2 ${points > 0 ? 'bg-white border-primary/20' : 'bg-gray-50 border-gray-100 opacity-50'}`}>
+                <div key={i} className={`premium-card p-6 text-center border ${points > 0 ? 'border-primary/20 bg-white/90 dark:bg-slate-950/60' : 'border-white/60 bg-slate-50/80 opacity-50 dark:border-white/10 dark:bg-slate-950/35'}`}>
                   <div className="text-4xl mb-3">{badge.icon}</div>
-                  <h4 className="font-bold text-gray-800">{badge.name}</h4>
-                  <p className="text-xs text-gray-500">{badge.desc}</p>
+                  <h4 className="font-bold text-slate-900 dark:text-white">{badge.name}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{badge.desc}</p>
                 </div>
               ))}
             </div>

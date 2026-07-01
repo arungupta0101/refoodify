@@ -16,29 +16,29 @@ export default function TestimonialSlider({ items = DUMMY }) {
   }, [items.length]);
 
   return (
-    <div className="relative max-w-4xl mx-auto">
-      <div className="overflow-hidden rounded-3xl bg-white shadow-xl border border-gray-100">
-        <div className="relative h-80 sm:h-64">
+    <div className="relative mx-auto max-w-5xl">
+      <div className="premium-card overflow-hidden">
+        <div className="relative min-h-[20rem] sm:min-h-[18rem]">
           {items.map((item, i) => (
             <div 
               key={i}
-              className={`absolute inset-0 p-8 sm:p-12 flex flex-col sm:flex-row items-center gap-8 transition-all duration-700 ease-in-out ${
-                i === idx ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'
+              className={`absolute inset-0 flex flex-col items-center gap-8 p-8 transition-all duration-700 ease-in-out sm:flex-row sm:p-12 ${
+                i === idx ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-8 opacity-0'
               }`}
             >
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-br from-green-400 to-emerald-600">
-                  <img src={item.image} alt={item.name} className="w-full h-full rounded-full object-cover border-4 border-white" />
+                <div className="rounded-full bg-gradient-to-br from-emerald-400 to-emerald-700 p-1">
+                  <img src={item.image} alt={item.name} className="h-24 w-24 rounded-full border-4 border-white object-cover dark:border-slate-900" />
                 </div>
               </div>
               <div className="text-center sm:text-left">
-                <div className="flex justify-center sm:justify-start gap-1 text-yellow-400 mb-3">
-                  {[...Array(5)].map((_, i) => <StarIcon key={i} className="w-5 h-5" />)}
+                <div className="mb-3 flex justify-center gap-1 text-amber-400 sm:justify-start">
+                  {[...Array(5)].map((_, starIndex) => <StarIcon key={starIndex} className="h-5 w-5" />)}
                 </div>
-                <p className="text-xl text-gray-700 font-medium leading-relaxed mb-4">"{item.text}"</p>
+                <p className="mb-4 text-lg font-medium leading-relaxed text-slate-700 md:text-xl dark:text-slate-200">"{item.text}"</p>
                 <div>
-                  <h4 className="font-bold text-gray-900 text-lg">{item.name}</h4>
-                  <p className="text-green-600 font-medium text-sm">{item.role}</p>
+                  <h4 className="text-lg font-bold text-slate-900 dark:text-white">{item.name}</h4>
+                  <p className="text-sm font-medium text-emerald-600 dark:text-emerald-300">{item.role}</p>
                 </div>
               </div>
             </div>
@@ -46,12 +46,12 @@ export default function TestimonialSlider({ items = DUMMY }) {
         </div>
       </div>
       
-      <div className="flex justify-center gap-2 mt-6">
+      <div className="mt-6 flex justify-center gap-2">
         {items.map((_, i) => (
           <button 
             key={i} 
             onClick={() => setIdx(i)} 
-            className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-8 bg-green-600' : 'w-2 bg-gray-300 hover:bg-gray-400'}`}
+            className={`h-2 rounded-full transition-all duration-300 ${i === idx ? 'w-8 bg-emerald-600 dark:bg-emerald-400' : 'w-2 bg-slate-300 hover:bg-slate-400 dark:bg-slate-600'}`}
             aria-label={`Go to slide ${i + 1}`}
           />
         ))}

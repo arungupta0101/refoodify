@@ -14,31 +14,27 @@ export default function LoadingScreen() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#fdfbf7] dark:bg-gray-900 transition-opacity duration-300 overflow-hidden">
-      {/* Abstract Background Shapes */}
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.12),transparent_28%),linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] transition-opacity duration-300 dark:bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),transparent_24%),linear-gradient(180deg,#020617_0%,#0f172a_100%)]">
       <motion.div 
-        className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-green-200/40 dark:bg-green-900/20 rounded-full blur-[100px]"
+        className="absolute top-[-10%] left-[-10%] h-[50vw] w-[50vw] rounded-full bg-emerald-200/40 blur-[100px] dark:bg-emerald-900/20"
         animate={{ scale: [1, 1.2, 1], x: [0, 50, 0], y: [0, 30, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div 
-        className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-orange-200/40 dark:bg-orange-900/20 rounded-full blur-[100px]"
+        className="absolute bottom-[-10%] right-[-10%] h-[50vw] w-[50vw] rounded-full bg-orange-200/40 blur-[100px] dark:bg-orange-900/20"
         animate={{ scale: [1, 1.2, 1], x: [0, -50, 0], y: [0, -30, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
       <div className="relative z-10 flex flex-col items-center">
-        {/* Central Loader */}
         <div className="relative w-32 h-32">
-          {/* Spinning Ring */}
           <motion.div 
             className="absolute inset-0 border-[6px] border-transparent border-t-green-500 border-r-orange-400 rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
           />
           
-          {/* Inner Content */}
-          <div className="absolute inset-3 bg-white dark:bg-gray-800 rounded-full shadow-sm flex items-center justify-center">
+          <div className="absolute inset-3 flex items-center justify-center rounded-full border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-900">
              <AnimatePresence mode='wait'>
                 <motion.div
                   key={index}
@@ -55,13 +51,13 @@ export default function LoadingScreen() {
         </div>
 
         <div className="mt-10 text-center">
-          <h2 className="text-3xl font-black text-gray-800 dark:text-white tracking-tight mb-2">
+          <h2 className="mb-2 text-3xl font-black tracking-tight text-slate-900 dark:text-white">
             Refoodify
           </h2>
           <div className="flex items-center justify-center gap-2">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Serving Kindness</span>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Serving Kindness</span>
             <motion.span 
-              className="inline-block w-1.5 h-1.5 bg-orange-400 rounded-full"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-orange-400"
               animate={{ opacity: [0, 1, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />

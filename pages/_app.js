@@ -12,17 +12,19 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }) {
       <AuthProvider>
         <ThemeProvider>
           <LoadingProvider>
-                {/* Global Background Pattern */}
-                <div className="fixed inset-0 -z-50 pointer-events-none">
-                  {/* Responsive Background Image Logic */}
-                  {/* Default (Mobile): mobile-bg.png | md (Desktop): desktop-bg.png */}
-                  <div className="absolute inset-0 bg-[url('/mobile-bg.png')] md:bg-[url('/desktop-bg.png')] bg-cover bg-center bg-no-repeat bg-fixed transition-all duration-500"></div>
-                  {/* Optional: Light Overlay for text readability */}
-                  <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
+            <div className="min-h-screen bg-slate-50 text-slate-800 transition-colors duration-500 dark:bg-slate-900 dark:text-slate-200">
+              {/* Consistent Background from Homepage */}
+              <div className="fixed inset-0 -z-10 h-full w-full">
+                <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/20" />
+                <div className="absolute bottom-0 left-0 -z-10">
+                  <div className="absolute h-80 w-80 rounded-full bg-emerald-300/10 blur-3xl" />
+                  <div className="absolute bottom-20 right-20 h-96 w-96 bg-blue-300/5 rounded-full blur-3xl" />
                 </div>
-            <GeminiChat />
-            <Component {...pageProps} />
-            <Toaster position="top-right" />
+              </div>
+              <GeminiChat />
+              <Component {...pageProps} />
+              <Toaster position="top-right" />
+            </div>
           </LoadingProvider>
         </ThemeProvider>
       </AuthProvider>

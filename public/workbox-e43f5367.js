@@ -770,7 +770,7 @@ define(['exports'], (function (exports) { 'use strict';
               // TODO(philipwalton): TypeScript errors without this typecast for
               // some reason (probably a bug). The real type here should work but
               // doesn't: `Array<Promise<Response> | undefined>`.
-            })); // TypeScript
+        }));
             event.waitUntil(requestPromises);
             // If a MessageChannel was used, reply to the message on success.
             if (event.ports && event.ports[0]) {

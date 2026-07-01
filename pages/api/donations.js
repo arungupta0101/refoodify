@@ -1,5 +1,6 @@
 import dbConnect from '../../lib/mongodb';
 import { Donation, Volunteer, User, Notification } from '../../lib/models';
+import checkRateLimit from '../../lib/rateLimit';
 
 export default async function handler(req, res) {
   try {
@@ -7,6 +8,10 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       const { type, amount, donorId, userId, isEmergency, location, city } = req.body;
+      if (!checkRateLimit(req, 10)) { // Limit to 10 requests per minute
+        return res.status(429).json({ message: 'Too many requests' });
+      }
+
       let pointsEarned = 0;
 
       if (type === 'volunteer') {
@@ -18,7 +23,7 @@ export default async function handler(req, res) {
         }
         return res.status(201).json({ ...vol.toObject(), pointsEarned });
       } else {
-        const donation = await Donation.create(req.body);
+        const donation = await Donation.create({ ...req.body, status: 'available' });
         
         // Points are NOT awarded at creation. They are awarded upon verification.
         pointsEarned = 0;
@@ -62,7 +67,10 @@ export default async function handler(req, res) {
       }));
       res.status(200).json(donationsWithNames);
     } else if (req.method === 'DELETE') {
-      const { id } = req.query;
+      const { id, userId } = req.query; // Add userId for security
+      const donation = await Donation.findById(id);
+      // Ensure the user deleting the donation is the one who created it
+      if (donation.donorId.toString() !== userId) return res.status(403).json({ message: 'Unauthorized' });
       await Donation.findByIdAndDelete(id);
       res.status(200).json({ message: 'Donation deleted successfully' });
     } else {

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
+import { ChevronDownIcon } from '@heroicons/react/24/solid';
 
 export default function FAQ() {
   const { user } = useAuth();
@@ -62,40 +63,39 @@ const handleManualSubmit = async (e) => {
   return (
     <>
       <Header />
-      <main className="min-h-screen pt-24 pb-12 px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-          {/* Header */}
-          <div className="bg-primary p-6 text-white text-center">
-            <h1 className="text-2xl font-bold">Refoodify Support Bot 🤖</h1>
-            <p className="text-orange-100 text-sm">How can we help you today?</p>
+      <main className="min-h-screen pt-24 pb-20">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="page-kicker justify-center mb-4">Support</p>
+            <h1 className="section-heading">Frequently Asked Questions</h1>
+            <p className="section-copy max-w-2xl mx-auto mt-4">Find answers to common questions. If you can't find what you're looking for, you can report an issue manually.</p>
           </div>
 
-          <div className="p-8">
+          <div className="premium-card p-0 overflow-hidden">
+          {/* Header */}
+          <div className="p-8 space-y-6">
             {step === 'bot' ? (
-              <div className="space-y-4 animate-fadeIn">
-                <p className="text-gray-600 font-medium mb-4">Choose a common topic:</p>
+              <div className="space-y-3 animate-fadeIn">
                 {botData.map((item) => (
-                  <div key={item.id} className="border rounded-2xl overflow-hidden transition-all">
+                  <div key={item.id} className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden transition-all">
                     <button 
                       onClick={() => setSelectedFaq(selectedFaq === item.id ? null : item.id)}
-                      className="w-full text-left p-4 hover:bg-orange-50 flex justify-between items-center font-semibold text-gray-700"
+                      className="flex w-full items-center justify-between p-5 text-left font-bold text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
                       {item.q}
-                      <span>{selectedFaq === item.id ? '−' : '+'}</span>
+                      <ChevronDownIcon className={`w-5 h-5 transition-transform ${selectedFaq === item.id ? 'rotate-180' : ''}`} />
                     </button>
                     {selectedFaq === item.id && (
-                      <div className="p-4 bg-orange-50 text-gray-600 text-sm border-t border-orange-100 animate-slideDown">
-                        {item.a}
-                      </div>
+                      <div className="animate-slideDown border-t border-emerald-100 bg-emerald-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">{item.a}</div>
                     )}
                   </div>
                 ))}
 
-                <div className="mt-8 p-6 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-center">
-                  <p className="text-gray-500 mb-4 text-sm font-medium">Problem not listed? Report it manually.</p>
+                <div className="mt-8 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-800 dark:bg-slate-900/60">
+                  <p className="mb-4 font-medium text-slate-500 dark:text-slate-400">Problem not listed?</p>
                   <button 
                     onClick={() => setStep('manual')}
-                    className="bg-gray-800 text-white px-6 py-2 rounded-xl hover:bg-black transition-all"
+                    className="premium-button-secondary bg-white"
                   >
                     Report a Bug / Other Issue
                   </button>
@@ -103,44 +103,40 @@ const handleManualSubmit = async (e) => {
               </div>
             ) : (
               <form onSubmit={handleManualSubmit} className="space-y-6 animate-fadeIn">
-                <button onClick={() => setStep('bot')} className="text-sm text-primary font-bold">← Back to Bot</button>
-                <h2 className="text-xl font-bold text-gray-800">Describe the problem</h2>
+                <button onClick={() => setStep('bot')} className="text-sm font-bold text-emerald-700 dark:text-emerald-300 hover:underline">← Back to FAQ</button>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Describe the problem</h2>
                 
                 <textarea 
                   value={bugDescription}
                   onChange={(e) => setBugDescription(e.target.value)}
                   placeholder="Tell us what's wrong..."
-                  className="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary h-32 outline-none"
+                  className="premium-textarea h-32 px-4 py-3"
                   required
                 />
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-500 uppercase ml-1">Attach Screenshot (Optional)</label>
+                  <label className="ml-1 text-sm font-bold uppercase text-slate-500">Attach screenshot (optional)</label>
                   <input 
                     type="file" 
                     onChange={(e) => setScreenshot(e.target.files[0])}
                     accept="image/*"
-                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-primary hover:file:bg-orange-100 cursor-pointer"
+                    className="w-full cursor-pointer text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/50 dark:file:text-emerald-300 dark:hover:file:bg-emerald-900"
                   />
                 </div>
 
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-orange-600 transition-all disabled:bg-gray-300"
+                  className="premium-button w-full"
                 >
                   {loading ? 'Sending to Admin...' : 'Send Report'}
                 </button>
               </form>
             )}
           </div>
+          </div>
         </div>
       </main>
-
-      <style jsx>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
-      `}</style>
       <Footer />
     </>
   );

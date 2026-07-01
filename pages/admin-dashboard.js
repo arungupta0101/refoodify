@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [viewScreenshot, setViewScreenshot] = useState(null);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [broadcastTarget, setBroadcastTarget] = useState('all');
+  const [broadcastTarget, setBroadcastTarget] = useState('all'); // 'all', 'user', 'ngo', 'restaurant'
 
   useEffect(() => {
     if (!user || user.userType !== 'admin') {
@@ -26,12 +26,12 @@ export default function AdminDashboard() {
     fetchData();
   }, [activeTab, user]);
 
-const fetchData = async () => {
+  const fetchData = async () => {
     if (activeTab === 'settings' || activeTab === 'security' || activeTab === 'profile' || activeTab === 'map' || activeTab === 'rewards') {
       setLoading(false);
       return;
     }
-    setLoading(true); 
+    setLoading(true);
     try {
       let url = `/api/admin?type=${activeTab}`;
       if (activeTab === 'org_reports') url = '/api/reports'; // Use new API for reports
@@ -41,7 +41,7 @@ const fetchData = async () => {
       if (res.ok) {
         setData(items);
       } else {
-        if (res.status === 401 || res.status === 403) {
+        if (res.status === 401 || res.status === 403) { // Unauthorized
            router.push('/login');
         }
         setData([]);
@@ -237,7 +237,7 @@ const fetchData = async () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Header isAdmin />
       <div className="flex flex-1 pt-24">
         {/* Sidebar */}
         <aside className="w-72 bg-white shadow-xl p-6 hidden md:block border-r border-gray-100">
@@ -247,12 +247,12 @@ const fetchData = async () => {
           </div>
           
           <nav className="space-y-2">
-            {[
+            {[ // Simplified tabs for clarity
               { id: 'users', label: '👥 All Users', color: 'blue' },
               { id: 'ngos', label: '🏢 NGOs', color: 'purple' },
               { id: 'restaurants', label: '🍕 Restaurants', color: 'orange' },
               { id: 'volunteers', label: '🤝 Volunteers', color: 'green' },
-              { id: 'faqs', label: '🐞 Bug Reports', color: 'red' },
+              { id: 'faqs', label: '🐞 Support/Bugs', color: 'red' },
               { id: 'org_reports', label: '🚩 Org Reports', color: 'red' }
             ].map(tab => (
               <button 
@@ -260,7 +260,7 @@ const fetchData = async () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full text-left p-4 rounded-2xl font-bold transition-all duration-200 ${
                   activeTab === tab.id 
-                  ? 'bg-primary text-white shadow-lg shadow-orange-200 translate-x-2' 
+                  ? 'bg-primary text-white shadow-lg shadow-emerald-200 translate-x-2' 
                   : 'text-gray-500 hover:bg-gray-50'
                 }`}
               >
@@ -269,7 +269,7 @@ const fetchData = async () => {
             ))}
           </nav>
 
-          <button 
+          <button
             onClick={() => { window.location.href='/login'; }}
             className="w-full mt-20 p-4 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-all flex items-center gap-2"
           >
@@ -278,10 +278,10 @@ const fetchData = async () => {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-8 overflow-y-auto">
+        <main className="flex-1 p-8 overflow-y-auto bg-slate-50/50">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-black text-gray-800 capitalize">{activeTab} List</h1>
-            <div className="flex gap-2">
+            <h1 className="text-3xl font-black text-gray-800 capitalize">{activeTab.replace('_', ' ')}</h1>
+            <div className="flex gap-3">
               {['users', 'ngos', 'restaurants', 'volunteers', 'org_reports'].includes(activeTab) && (
                 <button onClick={exportToCSV} className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all">
                   📥 Export CSV
@@ -295,7 +295,7 @@ const fetchData = async () => {
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-64 bg-white rounded-3xl border-2 border-dashed">
+            <div className="flex flex-col items-center justify-center h-64 bg-white rounded-3xl border-2 border-dashed border-gray-200">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
               <p className="text-gray-400 font-medium">Fetching Records...</p>
             </div>
@@ -434,7 +434,7 @@ const fetchData = async () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {Array.isArray(data) && data.map(faq => (
                     <div key={faq.id} className="bg-white p-6 rounded-3xl shadow-sm border border-red-50 relative group hover:shadow-md transition-all">
-                      <span className="absolute top-4 right-4 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Bug Report</span>
+                      <span className="absolute top-4 right-4 bg-red-100 text-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">Support Ticket</span>
                       <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">From: {faq.userEmail}</p>
                       <p className="text-gray-700 font-medium leading-relaxed mb-4">{faq.description}</p>
                       {faq.screenshot && (
@@ -445,7 +445,7 @@ const fetchData = async () => {
                         </div>
                       )}
                       {faq.status !== 'resolved' && (
-                        <button onClick={() => handleFaqReply(faq)} className="mt-4 w-full bg-green-500 text-white py-2 rounded-xl font-bold hover:bg-green-600">Resolve & Reply</button>
+                        <button onClick={() => handleFaqReply(faq)} className="mt-4 w-full bg-primary text-white py-2 rounded-xl font-bold hover:bg-green-600">Resolve & Reply</button>
                       )}
                     </div>
                   ))}
@@ -466,11 +466,11 @@ const fetchData = async () => {
                     <tbody className="text-sm font-medium text-gray-700">
                       {Array.isArray(data) && data.map(item => (
                         <tr key={item.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-all">
-                          <td className="p-5">
+                          <td className="p-5 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-400">{item.name ? item.name[0] : 'U'}</div>
                             <p className="font-bold text-gray-800">{item.name || item.volunteerName || 'Unnamed'}</p>
-                            <p className="text-[10px] text-gray-400 font-mono">{item.referenceNumber || item.id}</p>
                           </td>
-                          <td className="p-5">
+                          <td className="p-5 text-gray-600">
                             <p>{item.email || item.volunteerEmail}</p>
                             <p className="text-xs text-gray-400">{item.phone || item.volunteerPhone || 'No Phone'}</p>
                           </td>
@@ -484,11 +484,11 @@ const fetchData = async () => {
                           </td>
                           <td className="p-5">
                              {item.status === 'Pending' && ['users', 'ngos', 'restaurants'].includes(activeTab) ? (
-                               <button onClick={() => setSelectedItem(item)} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-600 transition-all shadow-md">
+                               <button onClick={() => setSelectedItem(item)} className="bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all shadow-md">
                                  REVIEW
                                </button>
                              ) : (
-                               <button onClick={() => setSelectedItem(item)} className="text-primary font-bold hover:underline">Manage</button>
+                               <button onClick={() => setSelectedItem(item)} className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50">Manage</button>
                              )}
                           </td>
                         </tr>
@@ -505,7 +505,7 @@ const fetchData = async () => {
       {/* DETAILED VIEW MODAL */}
       {selectedItem && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-popIn">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-popIn">
             <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
               <div>
                 <h3 className="text-2xl font-black text-gray-800 tracking-tight">Management View</h3>
@@ -540,12 +540,12 @@ const fetchData = async () => {
               {activeTab === 'volunteers' && selectedItem.status === 'pending' ? (
                 <div className="pt-6 flex gap-4">
                   <button 
-                    onClick={() => handleVolunteerAction(selectedItem, 'accepted')} 
+                    onClick={() => handleVolunteerAction(selectedItem, 'accepted')}
                     className="flex-1 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-green-100 hover:bg-green-600 transform active:scale-95 transition-all"
                   >
                     APPROVE HERO
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleVolunteerAction(selectedItem, 'rejected')} 
                     className="flex-1 bg-red-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-red-100 hover:bg-red-600 transform active:scale-95 transition-all"
                   >
@@ -556,13 +556,13 @@ const fetchData = async () => {
                  <div className="pt-6 flex gap-4">
                   {selectedItem.status === 'Pending' ? (
                     <>
-                      <button 
+                      <button
                         onClick={() => handleUserAction(selectedItem, 'Active')} 
                         className="flex-1 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-green-100 hover:bg-green-600 transform active:scale-95 transition-all"
                       >
                         APPROVE
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleUserAction(selectedItem, 'Rejected')} 
                         className="flex-1 bg-red-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-red-100 hover:bg-red-600 transform active:scale-95 transition-all"
                       >
@@ -570,21 +570,21 @@ const fetchData = async () => {
                       </button>
                     </>
                   ) : selectedItem.status !== 'Banned' ? (
-                    <button 
+                    <button
                       onClick={() => handleUserAction(selectedItem, 'Banned')} 
                       className="flex-1 bg-red-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-red-100 hover:bg-red-600 transform active:scale-95 transition-all"
                     >
                       BLOCK USER
                     </button>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => handleUserAction(selectedItem, 'Active')} 
                       className="flex-1 bg-green-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-green-100 hover:bg-green-600 transform active:scale-95 transition-all"
                     >
                       UNBLOCK USER
                     </button>
                   )}
-                  {selectedItem.email !== 'admin@refoodify.com' && (
+                  {selectedItem.email !== 'admin@refoodify.com' && ( // Prevent admin from deleting self
                   <button 
                     onClick={() => handleDeleteUser(selectedItem)} 
                     className="flex-1 bg-red-700 text-white py-4 rounded-2xl font-black shadow-lg shadow-red-100 hover:bg-red-800 transform active:scale-95 transition-all"
@@ -595,7 +595,7 @@ const fetchData = async () => {
                 </div>
               ) : (
                 <div className="pt-6">
-                   <button 
+                   <button
                     onClick={() => setSelectedItem(null)} 
                     className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black transition-all"
                   >
@@ -677,7 +677,7 @@ const fetchData = async () => {
 }
 
 function SidebarItem({ id, label, icon, activeTab, setActiveTab }) {
-  return (
+  return ( // This component is not used, but kept for reference
     <button 
       onClick={() => setActiveTab(id)}
       className={`w-full text-left p-3 rounded-xl font-bold transition-all duration-200 flex items-center gap-3 ${

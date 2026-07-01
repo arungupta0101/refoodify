@@ -19,6 +19,10 @@ export default function Chat() {
   const [isSending, setIsSending] = useState(false);
   const scrollContainerRef = useRef(null);
   const prevMessagesLength = useRef(0);
+  const audioRefs = useRef({});
+  const [playingAudioId, setPlayingAudioId] = useState(null);
+  const [audioProgress, setAudioProgress] = useState({});
+  const isReady = Boolean(user && withUser);
 
   // Poll for new messages every 2 seconds (Real-time simulation)
   useEffect(() => {
@@ -128,81 +132,183 @@ export default function Chat() {
     }
   };
 
+  const toggleAudio = async (messageId) => {
+    const audio = audioRefs.current[messageId];
+    if (!audio) return;
+
+    if (playingAudioId === messageId) {
+      audio.pause();
+      setPlayingAudioId(null);
+      return;
+    }
+
+    if (playingAudioId && audioRefs.current[playingAudioId]) {
+      audioRefs.current[playingAudioId].pause();
+    }
+
+    try {
+      await audio.play();
+      setPlayingAudioId(messageId);
+    } catch (error) {
+      toast.error('Audio playback failed');
+    }
+  };
+
+  const handleAudioProgress = (messageId, audio) => {
+    const duration = audio.duration || 0;
+    const currentTime = audio.currentTime || 0;
+    const progress = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+    setAudioProgress((prev) => ({
+      ...prev,
+      [messageId]: { progress, currentTime, duration }
+    }));
+  };
+
+  const formatAudioTime = (seconds) => {
+    if (!Number.isFinite(seconds) || seconds <= 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
+  const partnerName = typeof name === 'string' && name.trim() ? name.trim() : 'Chat';
+  const partnerInitial = partnerName.slice(0, 1).toUpperCase();
+
   return (
     <>
       <Header />
-      <main className="min-h-screen pt-24 pb-4 px-2 md:px-4">
-        <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 h-[85vh] flex flex-col">
-          
-          {/* Chat Header */}
-          <div className="bg-white p-4 border-b flex justify-between items-center shadow-sm z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-lg">
-                {name ? name[0] : 'U'}
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gray-800">{name || 'Chat'}</h1>
-                <p className="text-xs text-green-500 font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-               <button onClick={() => toast('Voice Call Coming Soon!')} className="p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-green-50 hover:text-green-600 transition-all"><PhoneIcon className="w-5 h-5" /></button>
-               <button onClick={() => toast('Video Call Coming Soon!')} className="p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-green-50 hover:text-green-600 transition-all"><VideoCameraIcon className="w-5 h-5" /></button>
-            </div>
-          </div>
-          
-          {/* Messages Area */}
-          <div ref={scrollContainerRef} className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#e5ddd5] bg-opacity-30">
-            {messages.map(msg => (
-              <div key={msg._id} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] p-3 rounded-2xl shadow-sm relative ${msg.senderId === user.uid ? 'bg-green-100 text-gray-800 rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none'}`}>
-                  
-                  {msg.type === 'text' && <p className="text-sm">{msg.content}</p>}
-                  
-                  {msg.type === 'image' && (
-                    <img src={msg.fileUrl} alt="Shared" className="rounded-lg max-h-48 object-cover cursor-pointer" onClick={() => window.open(msg.fileUrl)} />
-                  )}
-                  
-                  {msg.type === 'audio' && (
-                    <audio controls src={msg.fileUrl} className="w-48 h-8 mt-1" />
-                  )}
-
-                  <p className="text-[10px] text-gray-400 text-right mt-1">
-                    {new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+      <main className="min-h-screen bg-slate-50 pt-24 pb-8">
+        <div className="section-shell">
+          <div className="mx-auto flex h-[calc(100vh-8rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-100 bg-emerald-50 text-lg font-semibold text-emerald-700">
+                  {partnerInitial}
+                </div>
+                <div className="min-w-0">
+                  <h1 className="truncate text-lg font-semibold text-slate-900">{partnerName}</h1>
+                  <p className="flex items-center gap-2 text-sm text-emerald-600">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Online
                   </p>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
+              <div className="flex items-center gap-2">
+                <button onClick={() => toast('Voice Call Coming Soon!')} aria-label="Start voice call" className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                  <PhoneIcon className="h-5 w-5" />
+                </button>
+                <button onClick={() => toast('Video Call Coming Soon!')} aria-label="Start video call" className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                  <VideoCameraIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Messages Area */}
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-slate-50/80 px-4 py-5 sm:px-6">
+              {!isReady || messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <div className="max-w-md rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-10 text-center shadow-sm">
+                    <p className="text-lg font-semibold text-slate-900">Start the conversation</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">Messages you send here will appear in this thread and stay linked to the donation request.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {messages.map((msg) => {
+                    const isOwnMessage = msg.senderId === user.uid;
+                    return (
+                      <div key={msg._id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[78%] rounded-2xl border px-4 py-3 shadow-sm ${isOwnMessage ? 'border-emerald-600 bg-emerald-600 text-white rounded-br-md' : 'border-slate-200 bg-white text-slate-800 rounded-bl-md'}`}>
+                          {msg.type === 'text' && <p className="whitespace-pre-wrap text-sm leading-6">{msg.content}</p>}
+
+                          {msg.type === 'image' && (
+                            <img src={msg.fileUrl} alt="Shared" className="max-h-64 w-full rounded-xl object-cover cursor-pointer" onClick={() => window.open(msg.fileUrl, '_blank')} />
+                          )}
+
+                          {msg.type === 'audio' && (
+                            <div className={`min-w-[240px] rounded-2xl border px-4 py-3 ${isOwnMessage ? 'border-emerald-500/30 bg-white/10' : 'border-slate-200 bg-slate-50'}`}>
+                              <audio
+                                ref={(el) => {
+                                  if (el) {
+                                    audioRefs.current[msg._id] = el;
+                                  }
+                                }}
+                                src={msg.fileUrl}
+                                preload="metadata"
+                                onTimeUpdate={(event) => handleAudioProgress(msg._id, event.currentTarget)}
+                                onLoadedMetadata={(event) => handleAudioProgress(msg._id, event.currentTarget)}
+                                onEnded={() => setPlayingAudioId(null)}
+                                className="hidden"
+                              />
+                              <div className="flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleAudio(msg._id)}
+                                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors ${isOwnMessage ? 'bg-white text-emerald-600 hover:bg-emerald-50' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                                  aria-label={playingAudioId === msg._id ? 'Pause audio' : 'Play audio'}
+                                >
+                                  {playingAudioId === msg._id ? (
+                                    <span className="block h-3 w-3 rounded-sm bg-current" />
+                                  ) : (
+                                    <span className="ml-0.5 border-y-[7px] border-l-[11px] border-y-transparent border-l-current" />
+                                  )}
+                                </button>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-3 text-[11px] font-medium text-slate-500">
+                                    <span>Voice note</span>
+                                    <span>{formatAudioTime(audioProgress[msg._id]?.currentTime || 0)} / {formatAudioTime(audioProgress[msg._id]?.duration || 0)}</span>
+                                  </div>
+                                  <div className="mt-2 h-1.5 rounded-full bg-slate-200">
+                                    <div
+                                      className="h-1.5 rounded-full bg-emerald-600 transition-all duration-150"
+                                      style={{ width: `${audioProgress[msg._id]?.progress || 0}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <p className={`mt-2 text-[11px] ${isOwnMessage ? 'text-emerald-50/80' : 'text-slate-400'}`}>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </div>
+
+            {/* Input Area */}
+            <form onSubmit={handleSend} className="border-t border-slate-200 bg-white px-4 py-4 sm:px-6">
+              <div className="flex items-end gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-3">
+                <button type="button" onClick={() => fileInputRef.current.click()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition-colors hover:border-emerald-200 hover:text-emerald-700">
+                  <PhotoIcon className="h-5 w-5" />
+                </button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+                <textarea
+                  rows={1}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Write a message..."
+                  className="min-h-[44px] flex-1 resize-none border-0 bg-transparent px-1 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
+                />
+
+                {input.trim() && !isSending ? (
+                  <button type="submit" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition-transform hover:-translate-y-0.5 hover:bg-emerald-700 active:translate-y-0">
+                    <PaperAirplaneIcon className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all ${isRecording ? 'bg-red-500 text-white shadow-lg' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}>
+                    {isRecording ? <StopIcon className="h-5 w-5" /> : <MicrophoneIcon className="h-5 w-5" />}
+                  </button>
+                )}
+              </div>
+            </form>
           </div>
-
-          {/* Input Area */}
-          <form onSubmit={handleSend} className="p-3 bg-white border-t border-gray-100 flex items-center gap-2">
-            <button type="button" onClick={() => fileInputRef.current.click()} className="p-2 text-gray-500 hover:text-primary transition-colors">
-              <PhotoIcon className="w-6 h-6" />
-            </button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
-
-            <input 
-              type="text" 
-              value={input} 
-              onChange={(e) => setInput(e.target.value)} 
-              placeholder="Type a message..." 
-              className="flex-1 p-3 bg-gray-50 border rounded-xl outline-none focus:ring-2 ring-primary"
-            />
-            
-            {input.trim() && !isSending ? (
-              <button type="submit" className="bg-primary text-white p-3 rounded-xl hover:bg-green-600 transition-all shadow-lg transform active:scale-95">
-                <PaperAirplaneIcon className="w-5 h-5" />
-              </button>
-            ) : (
-              <button type="button" onMouseDown={startRecording} onMouseUp={stopRecording} onTouchStart={startRecording} onTouchEnd={stopRecording} className={`p-3 rounded-xl transition-all shadow-lg ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-primary text-white hover:bg-green-600'}`}>
-                {isRecording ? <StopIcon className="w-5 h-5" /> : <MicrophoneIcon className="w-5 h-5" />}
-              </button>
-            )}
-          </form>
         </div>
       </main>
       <Footer />

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { TrophyIcon } from '@heroicons/react/24/solid';
+import { TrophyIcon as TrophyIconSolid } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/outline';
 
 export default function Leaderboard() {
   const [leaders, setLeaders] = useState([]);
@@ -40,42 +41,45 @@ export default function Leaderboard() {
   return (
     <>
       <Header />
-      <main className="min-h-screen pt-24 pb-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-black text-gray-800 mb-4 flex items-center justify-center gap-3">
-              <TrophyIcon className="w-12 h-12 text-yellow-500" />
+      <main className="min-h-screen pt-24 pb-20">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <p className="page-kicker justify-center mb-4">Community Impact</p>
+            <h1 className="section-heading mb-4 flex items-center justify-center gap-3">
+              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-500 dark:bg-amber-500/10">
+                <TrophyIconSolid className="w-8 h-8" />
+              </span>
               Community Heroes
             </h1>
-            <p className="text-gray-600 text-lg">Celebrating the top contributors making a difference.</p>
+            <p className="section-copy mx-auto">Celebrating the top contributors making a difference across the Refoodify network.</p>
           </div>
 
           {/* Sort By Toggle */}
-          <div className="flex justify-center gap-4 mb-6">
+          <div className="flex flex-wrap justify-center gap-3 mb-6">
              <button 
                onClick={() => setSortBy('points')}
-               className={`px-6 py-2 rounded-full font-bold transition-all ${sortBy === 'points' ? 'bg-yellow-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-200'}`}
+               className={`premium-button px-5 py-2.5 text-sm ${sortBy === 'points' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_18px_45px_rgba(245,158,11,0.28)]' : 'bg-white/80 text-slate-600 border border-slate-200/50 dark:bg-slate-900/50 dark:text-slate-300 dark:border-slate-700/50'}`}
              >
-               🏆 By Points
+               <TrophyIconSolid className="w-4 h-4" /> By Points
              </button>
              <button 
                onClick={() => setSortBy('rating')}
-               className={`px-6 py-2 rounded-full font-bold transition-all ${sortBy === 'rating' ? 'bg-yellow-500 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-200'}`}
+               className={`premium-button px-5 py-2.5 text-sm ${sortBy === 'rating' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white shadow-[0_18px_45px_rgba(245,158,11,0.28)]' : 'bg-white/80 text-slate-600 border border-slate-200/50 dark:bg-slate-900/50 dark:text-slate-300 dark:border-slate-700/50'}`}
              >
-               ⭐ By Rating
+               <StarIcon className="w-4 h-4" /> By Rating
              </button>
           </div>
 
           {/* Category Tabs */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8 rounded-[1.75rem] border border-slate-200/50 bg-white/75 p-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-950/50">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setCategory(cat.id)}
                 className={`px-6 py-2 rounded-full font-bold transition-all ${
                   category === cat.id
-                    ? 'bg-primary text-white shadow-lg scale-105'
-                    : 'bg-white text-gray-500 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-primary to-emerald-500 text-white shadow-[0_18px_45px_rgba(34,197,94,0.28)] scale-105'
+                    : 'bg-transparent text-slate-500 hover:bg-slate-100/80 dark:text-slate-300 dark:hover:bg-slate-900'
                 }`}
               >
                 {cat.label}
@@ -83,32 +87,32 @@ export default function Leaderboard() {
             ))}
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+          <div className="premium-card p-0 overflow-hidden">
             {loading ? (
-               <div className="p-12 text-center text-gray-500">Loading heroes...</div>
+               <div className="p-12 text-center text-slate-500 dark:text-slate-400">Loading Heroes...</div>
             ) : leaders.length > 0 ? (
               leaders.map((user, index) => (
-                <div key={user._id} className={`flex items-center p-6 border-b border-gray-50 hover:bg-gray-50 transition-colors ${index < 3 ? 'bg-yellow-50/30' : ''}`}>
-                  <div className={`w-12 text-2xl font-black ${index === 0 ? 'text-yellow-500' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-orange-600' : 'text-gray-300'}`}>
+                <div key={user._id} className={`flex items-center gap-4 p-5 border-b border-slate-100 dark:border-slate-800 transition-colors last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 ${index < 3 ? 'bg-amber-50/60 dark:bg-amber-950/20' : ''}`}>
+                  <div className={`w-12 text-2xl font-black text-center ${index === 0 ? 'text-amber-500' : index === 1 ? 'text-slate-400' : index === 2 ? 'text-orange-600' : 'text-slate-300 dark:text-slate-600'}`}>
                     #{index + 1}
                   </div>
-                  <div className="w-14 h-14 rounded-full bg-gray-100 overflow-hidden mr-6 border-2 border-white shadow-sm flex items-center justify-center text-xl font-bold text-gray-400">
+                  <div className="w-14 h-14 rounded-full bg-white overflow-hidden border-2 border-white shadow-lg shadow-slate-200/70 flex items-center justify-center text-xl font-bold text-slate-400 dark:bg-slate-700 dark:border-slate-600 dark:shadow-black/20">
                     {user.photoURL ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" /> : (user.name ? user.name[0] : 'U')}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-800">{user.name || 'Anonymous Hero'}</h3>
-                    <span className="text-xs uppercase font-bold text-gray-500">{user.userType}</span>
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-white">{user.name || 'Anonymous Hero'}</h3>
+                    <span className="text-xs uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500">{user.userType}</span>
                   </div>
                   <div className="text-right">
                     {sortBy === 'points' ? (
                       <>
-                        <p className="text-2xl font-black text-primary">{user.points}</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Points</p>
+                        <p className="text-2xl font-black text-primary">{user.points || 0}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Points</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-2xl font-black text-yellow-500 flex items-center justify-end gap-1">{user.rating ? user.rating.toFixed(1) : '0.0'} <span className="text-lg">⭐</span></p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                        <p className="text-2xl font-black text-amber-500 flex items-center justify-end gap-1">{user.rating ? user.rating.toFixed(1) : '0.0'} <span className="text-lg">⭐</span></p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                           Rating ({user.ratingCount || 0})
                         </p>
                       </>
@@ -116,7 +120,7 @@ export default function Leaderboard() {
                   </div>
                 </div>
               ))
-            ) : <div className="p-12 text-center text-gray-500">No heroes found in this category yet.</div>}
+            ) : <div className="p-12 text-center text-slate-500 dark:text-slate-400">No heroes found in this category yet. Be the first!</div>}
           </div>
         </div>
       </main>
