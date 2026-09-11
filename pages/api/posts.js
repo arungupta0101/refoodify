@@ -6,13 +6,27 @@ import { sanitizeInput } from '../../lib/validate';
 const PostSchema = new mongoose.Schema({
   author: {
     name: String,
+    handle: String,
     avatar: String,
     role: String,
-    userId: String
+    userId: String,
+    points: { type: Number, default: 250 },
+    location: { type: String, default: 'India' },
+    badge: String
   },
   content: String,
   image: String,
-  likes: [String], // Array of userIds
+  postType: { type: String, default: 'story' },
+  likes: [String],
+  savedBy: [String],
+  claimed: { type: Boolean, default: false },
+  claimedBy: {
+    userId: String,
+    userName: String,
+    userRole: String,
+    contactPhone: String,
+    claimedAt: { type: Date, default: Date.now }
+  },
   comments: [{
     user: String,
     text: String,
@@ -21,12 +35,9 @@ const PostSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-let Post;
-try {
-  Post = mongoose.model('Post');
-} catch {
-  Post = mongoose.model('Post', PostSchema);
-}
+const getPostModel = () => {
+  return mongoose.models.Post || mongoose.model('Post', PostSchema);
+};
 
 export const config = {
   api: {
@@ -36,66 +47,145 @@ export const config = {
   },
 };
 
-export default async function handler(req, res) {
-  try {
-    await dbConnect();
-  } catch (error) {
-    return res.status(503).json({ error: 'Database connection failed' });
-  }
+// In-memory fallback array for dev runtime if MongoDB is not connected
+let memoryPosts = [];
 
-  // 1. Rate Limiting
-  if (!checkRateLimit(req, 10)) { // Stricter limit for posts
+export default async function handler(req, res) {
+  const { method } = req;
+
+  // Rate Limiting
+  if (checkRateLimit && !checkRateLimit(req, 20)) {
     return res.status(429).json({ error: 'Too many requests' });
   }
 
-  const { method } = req;
+  let dbConnected = false;
+  let Post;
+  try {
+    await dbConnect();
+    Post = getPostModel();
+    dbConnected = true;
+  } catch (error) {
+    console.warn('MongoDB connection fallback in /api/posts:', error.message);
+  }
 
   if (method === 'GET') {
     try {
-      const posts = await Post.find({}).sort({ createdAt: -1 });
-      res.status(200).json(posts);
+      if (dbConnected && Post) {
+        const posts = await Post.find({}).sort({ createdAt: -1 });
+        return res.status(200).json(posts);
+      }
+      return res.status(200).json(memoryPosts);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch posts' });
+      return res.status(200).json(memoryPosts);
     }
   } else if (method === 'POST') {
     try {
-      // 2. Input Sanitization
       const cleanBody = {
         ...req.body,
         content: sanitizeInput(req.body.content)
       };
-      const post = await Post.create(cleanBody);
-      res.status(201).json(post);
+
+      if (dbConnected && Post) {
+        const post = await Post.create(cleanBody);
+        return res.status(201).json(post);
+      } else {
+        const fallbackPost = {
+          _id: `mem-${Date.now()}`,
+          ...cleanBody,
+          likes: [],
+          savedBy: [],
+          comments: [],
+          claimed: false,
+          createdAt: new Date()
+        };
+        memoryPosts.unshift(fallbackPost);
+        return res.status(201).json(fallbackPost);
+      }
     } catch (error) {
-      res.status(500).json({ error: 'Failed to create post' });
+      return res.status(500).json({ error: 'Failed to create post' });
     }
   } else if (method === 'PUT') {
-    const { id, action, userId, text, userName } = req.body;
+    const { id, action, userId, text, userName, userRole, contactPhone } = req.body;
     try {
-      const post = await Post.findById(id);
-      if (!post) return res.status(404).json({ error: 'Post not found' });
-
-      if (action === 'like') {
-        if (post.likes.includes(userId)) {
-          post.likes = post.likes.filter(uid => uid !== userId);
-        } else {
-          post.likes.push(userId);
+      if (dbConnected && Post) {
+        const post = await Post.findById(id);
+        if (post) {
+          if (action === 'like') {
+            if (!post.likes) post.likes = [];
+            if (post.likes.includes(userId)) {
+              post.likes = post.likes.filter(uid => uid !== userId);
+            } else {
+              post.likes.push(userId);
+            }
+          } else if (action === 'save') {
+            if (!post.savedBy) post.savedBy = [];
+            if (post.savedBy.includes(userId)) {
+              post.savedBy = post.savedBy.filter(uid => uid !== userId);
+            } else {
+              post.savedBy.push(userId);
+            }
+          } else if (action === 'claim') {
+            post.claimed = true;
+            post.claimedBy = {
+              userId,
+              userName: sanitizeInput(userName) || 'Claimant',
+              userRole: userRole || 'NGO',
+              contactPhone: sanitizeInput(contactPhone) || '',
+              claimedAt: new Date()
+            };
+          } else if (action === 'comment') {
+            if (!post.comments) post.comments = [];
+            post.comments.push({
+              user: sanitizeInput(userName) || 'Anonymous',
+              text: sanitizeInput(text),
+              timestamp: new Date()
+            });
+          }
+          await post.save();
+          return res.status(200).json(post);
         }
-      } else if (action === 'comment') {
-        // Sanitize comment
-        post.comments.push({
-          user: sanitizeInput(userName) || 'Anonymous',
-          text: sanitizeInput(text),
-          timestamp: new Date()
-        });
+      } else {
+        // Fallback memory post update
+        const post = memoryPosts.find(p => p._id === id);
+        if (post) {
+          if (action === 'claim') {
+            post.claimed = true;
+            post.claimedBy = {
+              userId,
+              userName: userName || 'Claimant',
+              userRole: userRole || 'NGO',
+              contactPhone: contactPhone || '',
+              claimedAt: new Date()
+            };
+          } else if (action === 'like') {
+            if (!post.likes) post.likes = [];
+            if (post.likes.includes(userId)) post.likes = post.likes.filter(u => u !== userId);
+            else post.likes.push(userId);
+          } else if (action === 'save') {
+            if (!post.savedBy) post.savedBy = [];
+            if (post.savedBy.includes(userId)) post.savedBy = post.savedBy.filter(u => u !== userId);
+            else post.savedBy.push(userId);
+          }
+          return res.status(200).json(post);
+        }
       }
-
-      await post.save();
-      res.status(200).json(post);
+      return res.status(200).json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update post' });
+      return res.status(500).json({ error: 'Failed to update post' });
+    }
+  } else if (method === 'DELETE') {
+    const { id } = req.query;
+    try {
+      if (dbConnected && Post) {
+        await Post.findByIdAndDelete(id);
+      } else {
+        memoryPosts = memoryPosts.filter(p => p._id !== id);
+      }
+      return res.status(200).json({ success: true, message: 'Post deleted' });
+    } catch (error) {
+      return res.status(500).json({ error: 'Failed to delete post' });
     }
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 }

@@ -48,8 +48,8 @@ export default function Footer() {
           <div>
             <h4 className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">Contact</h4>
             <ul className="space-y-4 text-slate-300">
-              <li className="flex items-start gap-3"><EnvelopeIcon className="mt-0.5 h-5 w-5 text-emerald-300" /><span>support@refoodify.com</span></li>
-              <li className="flex items-start gap-3"><PhoneIcon className="mt-0.5 h-5 w-5 text-emerald-300" /><span>+1-234-567-890</span></li>
+              <li className="flex items-start gap-3"><EnvelopeIcon className="mt-0.5 h-5 w-5 text-emerald-300" /><span>arunjacker0101@gmail.com</span></li>
+              <li className="flex items-start gap-3"><PhoneIcon className="mt-0.5 h-5 w-5 text-emerald-300" /><span>+918303255423</span></li>
             </ul>
             <Link href="/signup" className="premium-button mt-6 inline-flex w-full sm:w-auto">
               Partner with us

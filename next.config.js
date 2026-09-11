@@ -1,8 +1,10 @@
+const isDev = process.env.NODE_ENV === 'development';
+
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  disable: isDev,
 });
 
 module.exports = withPWA({
@@ -17,6 +19,7 @@ module.exports = withPWA({
     ],
   },
   async headers() {
+    if (isDev) return [];
     return [
       {
         source: '/(.*)',
@@ -35,7 +38,7 @@ module.exports = withPWA({
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://maps.googleapis.com https://nominatim.openstreetmap.org https://server.arcgisonline.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://images.unsplash.com https://maps.googleapis.com https://nominatim.openstreetmap.org https://server.arcgisonline.com;",
           },
         ],
       },

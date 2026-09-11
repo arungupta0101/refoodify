@@ -41,14 +41,14 @@ export default function Contact() {
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Direct Contact</h2>
                 <div className="space-y-5 text-slate-600 dark:text-slate-300">
                   <p className="flex items-center gap-3"><Mail className="w-5 h-5 text-primary" /> support@refoodify.com</p>
-                  <p className="flex items-center gap-3"><Phone className="w-5 h-5 text-primary" /> +91-123-456-7890</p>
+                  <p className="flex items-center gap-3"><Phone className="w-5 h-5 text-primary" /> +918303255423</p>
                   <p className="flex items-center gap-3"><Clock className="w-5 h-5 text-primary" /> Response within 24 hours</p>
                 </div>
               </div>
               <div className="premium-card p-8 sm:p-10">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Our Office</h2>
                 <p className="text-slate-600 dark:text-slate-300">
-                  123 Green Street, Innovation Park, Gorakhpur, Uttar Pradesh, India - 273001
+                  Buddha Institute of Technology, Gorakhpur, Uttar Pradesh, India - 273209
                 </p>
               </div>
             </aside>
