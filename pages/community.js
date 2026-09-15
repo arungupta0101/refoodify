@@ -349,7 +349,7 @@ export default function Community() {
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📸</span>
                 <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                  Instagram Community Feed
+                  Refoodify Community Feed
                 </h1>
               </div>
               <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">

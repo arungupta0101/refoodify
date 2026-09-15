@@ -1,5 +1,6 @@
 import dbConnect from '../../../lib/mongodb';
 import { User } from '../../../lib/models';
+import mongoose from 'mongoose';
 
 export const config = {
   api: {
@@ -14,16 +15,28 @@ export default async function handler(req, res) {
     await dbConnect();
     const { uid } = req.query;
 
+    if (!uid) {
+      return res.status(400).json({ message: 'UID query parameter is required' });
+    }
+
     if (req.method === 'GET') {
-      let user = await User.findById(uid);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      let user = null;
+      if (mongoose.Types.ObjectId.isValid(uid)) {
+        user = await User.findById(uid);
+      }
+      if (!user) {
+        user = await User.findOne({ $or: [{ email: uid }, { firebaseUid: uid }] });
+      }
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
       // Generate Referral Code if missing
       if (!user.referralCode) {
-         const prefix = (user.name ? user.name.replace(/[^a-zA-Z]/g, '').substring(0, 4) : 'USER').toUpperCase();
-         const randomNum = Math.floor(1000 + Math.random() * 9000);
-         user.referralCode = `${prefix}${randomNum}`;
-         await user.save();
+        const prefix = (user.name ? user.name.replace(/[^a-zA-Z]/g, '').substring(0, 4) : 'USER').toUpperCase();
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        user.referralCode = `${prefix}${randomNum}`;
+        await user.save();
       }
 
       res.status(200).json(user);

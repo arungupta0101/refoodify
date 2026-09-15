@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import 'leaflet/dist/leaflet.css';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '../contexts/AuthContext';
 import { SessionProvider } from "next-auth/react"

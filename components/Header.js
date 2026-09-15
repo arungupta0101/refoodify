@@ -45,6 +45,9 @@ export default function Header() {
       items: [
         { name: 'Restaurant', path: '/restaurant' },
         { name: 'Inventory', path: '/inventory' },
+        { name: 'AI Demand Prediction', path: '/demand-prediction' },
+        { name: 'AI Surplus Prediction', path: '/surplus-prediction' },
+        { name: 'AI Route Optimization', path: '/route-optimization' },
         { name: 'Campaigns', path: '/campaigns' },
       ]
     },
@@ -84,7 +87,7 @@ export default function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/60 bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-950/70">
       <div className="section-shell">
         <div className="flex h-20 items-center justify-between gap-4">
-          
+
           <Link href="/" className="flex items-center gap-3 group shrink-0">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-700 shadow-sm transition-transform duration-300 group-hover:rotate-6 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
               <HeartIcon className="h-5 w-5" />
@@ -97,9 +100,9 @@ export default function Header() {
 
           <nav className="hidden items-center gap-1 lg:flex">
             {mainLinks.map((link) => (
-              <Link 
-                key={link.name} 
-                href={link.path} 
+              <Link
+                key={link.name}
+                href={link.path}
                 className={`relative rounded-full px-4 py-2 text-sm font-semibold transition-colors ${isActive(link.path) ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'}`}
               >
                 {isActive(link.path) && <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-emerald-500" />}
@@ -113,11 +116,11 @@ export default function Header() {
                   {group.title}
                   <ChevronDownIcon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
                 </button>
-                
+
                 <div className="absolute left-0 top-full z-50 mt-3 w-64 rounded-2xl border border-slate-200 bg-white/95 p-2 opacity-0 shadow-2xl backdrop-blur-xl invisible transition-all duration-200 translate-y-2 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-slate-800 dark:bg-slate-950/95">
                   {group.items.map((item) => (
-                    <Link 
-                      key={item.name} 
+                    <Link
+                      key={item.name}
                       href={item.path}
                       className="block rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-emerald-300"
                     >
@@ -162,7 +165,7 @@ export default function Header() {
               )}
             </div>
 
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle mobile menu"
               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 lg:hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
@@ -176,21 +179,20 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className="lg:hidden absolute left-0 top-full max-h-[90vh] w-full overflow-y-auto border-t border-slate-200 bg-white/95 shadow-2xl backdrop-blur-2xl animate-fadeIn dark:border-slate-800 dark:bg-slate-950/95">
           <div className="px-4 pb-6 pt-4 space-y-2">
-            
+
             {deferredPrompt && (
               <button onClick={handleInstallClick} className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 font-semibold text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <ArrowDownTrayIcon className="h-5 w-5" /> Install Refoodify App
               </button>
             )}
-            
+
             {mainLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block rounded-2xl px-4 py-3 text-base font-semibold transition-all ${
-                  isActive(link.path) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'
-                }`}
+                className={`block rounded-2xl px-4 py-3 text-base font-semibold transition-all ${isActive(link.path) ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900'
+                  }`}
               >
                 {link.name}
               </Link>
@@ -198,14 +200,14 @@ export default function Header() {
 
             {dropdowns.map((group) => (
               <div key={group.title} className="border-b border-slate-200 last:border-0 dark:border-slate-800">
-                <button 
+                <button
                   onClick={() => toggleMobileDropdown(group.title)}
                   className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-900"
                 >
                   {group.title}
                   <ChevronDownIcon className={`h-4 w-4 transition-transform ${mobileDropdown === group.title ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {mobileDropdown === group.title && (
                   <div className="space-y-1 rounded-b-2xl bg-slate-50/80 pb-2 pl-4 dark:bg-slate-900/70">
                     {group.items.map((item) => (
@@ -224,24 +226,24 @@ export default function Header() {
             ))}
 
             <div className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-200 pt-4 dark:border-slate-800">
-              <Link 
+              <Link
                 href="/profile"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 transition-all hover:-translate-y-0.5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
               >
                 <UserCircleIcon className="h-5 w-5" /> Profile
               </Link>
-              
+
               {user ? (
-                <button 
-                  onClick={() => { logout(); setIsMobileMenuOpen(false); }} 
+                <button
+                  onClick={() => { logout(); setIsMobileMenuOpen(false); }}
                   className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 font-semibold text-rose-600 transition-all hover:-translate-y-0.5 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
                 >
                   Logout
                 </button>
               ) : (
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="premium-button text-center"
                 >

@@ -27,7 +27,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 const Map = dynamic(() => import('../components/Map'), { ssr: false });
 
 // Helper to format numbers
-const formatNumber = (num) => num > 999 ? `${(num/1000).toFixed(1)}k` : num;
+const formatNumber = (num) => num > 999 ? `${(num / 1000).toFixed(1)}k` : num;
 
 const toNumber = (value) => {
   const parsed = Number(value);
@@ -77,12 +77,12 @@ const getStoredBadges = (profile, donations = []) => {
 
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth() || {};
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ 
+  const [editForm, setEditForm] = useState({
     name: '', address: '', city: '', state: '', pincode: '', email: '', phone: '', bio: '', photoURL: '',
     fssai: '', workingHours: '', registrationNumber: '', coverageArea: '', organizationName: ''
   });
@@ -126,13 +126,14 @@ export default function Profile() {
   ];
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       router.push('/login');
       return;
     }
     fetchProfile();
     setIsAdmin(user.userType === 'admin' || user.email === 'admin@refoodify.com');
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchProfile = async () => {
     try {
@@ -143,25 +144,25 @@ export default function Profile() {
       const donationRes = await fetch(`/api/donations?userId=${user.uid}`);
       // Fetch Notifications
       const notifRes = await fetch(`/api/notifications?userId=${user.uid}`);
-      
+
       if (profileRes.ok) {
         profileData = await profileRes.json();
         setProfile(profileData);
-        
+
         // Intelligent Address Parsing
         // If 'street' is saved, use it. Otherwise, try to extract street from full address if it contains city/state.
         let streetAddress = profileData.street || profileData.address || '';
         if (!profileData.street && profileData.address && profileData.city) {
-           // Attempt to strip city and following parts if address was concatenated
-           const cityIndex = profileData.address.lastIndexOf(`, ${profileData.city}`);
-           if (cityIndex !== -1) {
-             streetAddress = profileData.address.substring(0, cityIndex);
-           }
+          // Attempt to strip city and following parts if address was concatenated
+          const cityIndex = profileData.address.lastIndexOf(`, ${profileData.city}`);
+          if (cityIndex !== -1) {
+            streetAddress = profileData.address.substring(0, cityIndex);
+          }
         }
 
-        setEditForm({ 
-          name: profileData.name || '', 
-          address: streetAddress, 
+        setEditForm({
+          name: profileData.name || '',
+          address: streetAddress,
           city: profileData.city || '',
           state: profileData.state || '',
           pincode: profileData.pincode || '',
@@ -198,7 +199,7 @@ export default function Profile() {
           // Simple filter: Check if donation location contains user's city/address keywords
           // For prototype, we show all or filter loosely
           const userLoc = (user.address || '').toLowerCase();
-          const filtered = allDonations.filter(d => 
+          const filtered = allDonations.filter(d =>
             userLoc && d.location && (d.location.toLowerCase().includes(userLoc) || userLoc.includes(d.location.toLowerCase()))
           );
           // Fallback: Show all if no address match found (for demo purposes)
@@ -217,9 +218,9 @@ export default function Profile() {
           const userCity = (profileData?.city || user.city || '').toLowerCase();
           const filteredNgos = userCity
             ? ngos.filter((ngo) => {
-                const searchText = `${ngo.name || ''} ${ngo.organizationName || ''}`.toLowerCase();
-                return searchText.includes(userCity) || userCity.includes(searchText);
-              })
+              const searchText = `${ngo.name || ''} ${ngo.organizationName || ''}`.toLowerCase();
+              return searchText.includes(userCity) || userCity.includes(searchText);
+            })
             : ngos;
           setNearbyNgos((filteredNgos.length > 0 ? filteredNgos : ngos).slice(0, 6));
         }
@@ -378,21 +379,21 @@ export default function Profile() {
       if (res.ok) {
         const data = await res.json();
         setDonations(data);
-        
+
         const updatedDonation = data.find(d => (d._id === donationId || d.id === donationId));
-        
+
         if (updatedDonation) {
-            if (updatedDonation.status === 'completed') {
-                toast.success("Donation collected! Please rate the NGO.", { id: loadingToast });
-                if (!updatedDonation.donorRating) {
-                    setRateNgoForm(prev => ({ ...prev, id: updatedDonation._id || updatedDonation.id }));
-                    setShowRateNgoModal(true);
-                }
-            } else {
-                toast.success(`Status: ${updatedDonation.status}`, { id: loadingToast });
+          if (updatedDonation.status === 'completed') {
+            toast.success("Donation collected! Please rate the NGO.", { id: loadingToast });
+            if (!updatedDonation.donorRating) {
+              setRateNgoForm(prev => ({ ...prev, id: updatedDonation._id || updatedDonation.id }));
+              setShowRateNgoModal(true);
             }
+          } else {
+            toast.success(`Status: ${updatedDonation.status}`, { id: loadingToast });
+          }
         } else {
-            toast.dismiss(loadingToast);
+          toast.dismiss(loadingToast);
         }
       }
     } catch (error) {
@@ -403,12 +404,12 @@ export default function Profile() {
   const handleNotificationClick = (n) => {
     markAsRead(n._id);
     if (n.message && (n.message.toLowerCase().includes('verified') || n.message.toLowerCase().includes('completed'))) {
-       const unrated = donations.find(d => d.status === 'completed' && d.ngoId && !d.donorRating);
-       if (unrated) {
-         setRateNgoForm(prev => ({ ...prev, id: unrated._id || unrated.id }));
-         setShowRateNgoModal(true);
-         setShowNotifications(false);
-       }
+      const unrated = donations.find(d => d.status === 'completed' && d.ngoId && !d.donorRating);
+      if (unrated) {
+        setRateNgoForm(prev => ({ ...prev, id: unrated._id || unrated.id }));
+        setShowRateNgoModal(true);
+        setShowNotifications(false);
+      }
     }
   };
 
@@ -518,7 +519,7 @@ export default function Profile() {
   const handleVerifySubmit = async (e) => {
     e.preventDefault();
     if (!verifyModal) return;
-    
+
     if (!verifyForm.photo) {
       toast.error("Photo proof is required!");
       return;
@@ -599,7 +600,7 @@ export default function Profile() {
     });
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  if (loading || authLoading) return <div className="flex h-screen items-center justify-center font-bold text-slate-600 dark:text-slate-300">Loading profile...</div>;
   if (!user) return null;
 
   const displayProfile = profile || user || {};
@@ -607,7 +608,7 @@ export default function Profile() {
 
   // Robust Level Calculation
   const points = Number(displayProfile.points) || 0;
-  
+
   const getLevelInfo = (pts, type) => {
     if (type === 'ngo') {
       if (pts >= 4000) return { name: 'Gold', next: 10000 };
@@ -630,7 +631,7 @@ export default function Profile() {
   const levelInfo = getLevelInfo(points, userType);
   const levelName = levelInfo.name;
   const progress = Math.min((points / levelInfo.next) * 100, 100);
-  
+
   // Generate Referral Code if missing (Simple logic for display)
   const myReferralCode = displayProfile.referralCode || (displayProfile.name ? displayProfile.name.substring(0, 4).toUpperCase() + Math.floor(Math.random() * 1000) : 'USER123');
 

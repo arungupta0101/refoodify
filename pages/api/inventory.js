@@ -7,14 +7,27 @@ export default async function handler(req, res) {
     const { userId, id } = req.query;
 
     if (req.method === 'GET') {
-      if (!userId) return res.status(400).json({ message: 'User ID required' });
-      const items = await Inventory.find({ userId }).sort({ createdAt: -1 });
+      let filter = {};
+      if (userId && userId !== 'all') {
+        const userIds = userId.split(',').map((u) => u.trim());
+        filter = { userId: { $in: userIds } };
+      }
+      const items = await Inventory.find(filter).sort({ createdAt: -1 });
       return res.status(200).json(items);
     }
 
     if (req.method === 'POST') {
-      const isArray = Array.isArray(req.body);
-      const rawPayload = isArray ? req.body : [req.body];
+      let bodyData = req.body;
+      if (typeof bodyData === 'string') {
+        try {
+          bodyData = JSON.parse(bodyData);
+        } catch (e) {
+          console.warn('Failed to parse req.body string:', e);
+        }
+      }
+
+      const isArray = Array.isArray(bodyData);
+      const rawPayload = isArray ? bodyData : [bodyData];
 
       const cleanedPayload = rawPayload.map(item => {
         const copy = { ...item };
