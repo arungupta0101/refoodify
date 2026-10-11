@@ -8,9 +8,9 @@ export default function Blog() {
 
   useEffect(() => {
     fetch('/api/stories').then(res => res.json()).then(data => {
-      if(Array.isArray(data) && data.length > 0) setStories(data);
+      if (Array.isArray(data) && data.length > 0) setStories(data);
       else setStories([
-        { _id: 1, title: 'How We Saved 1000kg of Food in Gorakhpur', content: 'Our journey in Gorakhpur started with a single restaurant partner. Within a month, we scaled to over 50 partners, redirecting thousands of meals from landfills to hungry mouths. This is the story of community power.', author: 'Refoodify Team', date: new Date().toISOString(), category: 'Impact' },
+        { _id: 1, title: 'How We Saved 1000kg of Food in Gorakhpur', content: 'Our journey in Gorakhpur started with a Just an idea and now our aim is to become the best among evryone. Within a month, we scaled to over 50 partners, redirecting thousands of meals from landfills to hungry mouths. This is the story of community power.', author: 'Refoodify Team', date: new Date().toISOString(), category: 'Impact' },
         { _id: 2, title: '5 Simple Tips to Reduce Your Kitchen Waste Today', content: 'Simple habits can make a huge difference in your daily life. From smart shopping to creative leftover recipes, discover how you can contribute to a zero-waste world right from your home.', author: 'Green Earth Initiative', date: new Date(Date.now() - 86400000 * 5).toISOString(), category: 'Lifestyle' }
       ]);
     });
@@ -29,8 +29,8 @@ export default function Blog() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {stories.map((story, i) => (
-              <motion.div 
-                key={story._id} 
+              <motion.div
+                key={story._id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: i * 0.15 }}
