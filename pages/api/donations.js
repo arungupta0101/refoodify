@@ -1,6 +1,7 @@
 import dbConnect from '../../lib/mongodb';
 import { Donation, Volunteer, User, Notification } from '../../lib/models';
 import checkRateLimit from '../../lib/rateLimit';
+import { generateDonationProof } from '../../lib/blockchain';
 
 export default async function handler(req, res) {
   try {
@@ -23,8 +24,18 @@ export default async function handler(req, res) {
         }
         return res.status(201).json({ ...vol.toObject(), pointsEarned });
       } else {
-        const donation = await Donation.create({ ...req.body, status: 'available' });
-        
+        // Mint Cryptographic Proof-of-Donation (PoD)
+        const proof = generateDonationProof(req.body);
+        const donation = await Donation.create({
+          ...req.body,
+          status: 'available',
+          blockchainHash: proof.blockchainHash,
+          blockNumber: proof.blockNumber,
+          certificateId: proof.certificateId,
+          network: proof.network,
+          txTimestamp: proof.txTimestamp
+        });
+
         // Points are NOT awarded at creation. They are awarded upon verification.
         pointsEarned = 0;
 
@@ -32,7 +43,7 @@ export default async function handler(req, res) {
         if (type === 'food') {
           const searchLocation = city || location || '';
           if (searchLocation) {
-            const ngos = await User.find({ 
+            const ngos = await User.find({
               userType: 'ngo',
               $or: [
                 { address: { $regex: searchLocation, $options: 'i' } },
@@ -51,12 +62,12 @@ export default async function handler(req, res) {
           }
         }
 
-        return res.status(201).json({ ...donation.toObject(), pointsEarned });
+        return res.status(201).json({ ...donation.toObject(), pointsEarned, blockchainProof: proof });
       }
     } else if (req.method === 'GET') {
       const { userId } = req.query;
       const donations = await Donation.find({ donorId: userId }).sort({ createdAt: -1 });
-      
+
       const donationsWithNames = await Promise.all(donations.map(async (d) => {
         const obj = d.toObject();
         if (obj.ngoId) {

@@ -4,13 +4,13 @@ import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import toast from 'react-hot-toast';
-import { 
-  HeartIcon, 
-  CurrencyRupeeIcon, 
-  UserGroupIcon, 
-  ExclamationTriangleIcon, 
-  MapPinIcon, 
-  ClockIcon, 
+import {
+  HeartIcon,
+  CurrencyRupeeIcon,
+  UserGroupIcon,
+  ExclamationTriangleIcon,
+  MapPinIcon,
+  ClockIcon,
   PhotoIcon,
   CheckBadgeIcon,
   TruckIcon,
@@ -20,12 +20,15 @@ import {
   HandThumbUpIcon,
   MicrophoneIcon
 } from '@heroicons/react/24/outline';
+import ProofOfDonationModal from '../components/ProofOfDonationModal';
 
 export default function Donate() {
   const { user } = useAuth();
   const router = useRouter();
   const [donationType, setDonationType] = useState('food');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [createdProof, setCreatedProof] = useState(null);
   const [referenceNumber, setReferenceNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userStats, setUserStats] = useState({ peopleFed: 0, foodSaved: 0, co2Reduced: 0 });
@@ -42,14 +45,14 @@ export default function Donate() {
   });
 
   const [formData, setFormData] = useState({
-    foodType: 'Veg', 
+    foodType: 'Veg',
     foodItem: '',
-    quantity: '', 
-    location: '', 
+    quantity: '',
+    location: '',
     expiryDate: '',
-    amount: '', 
-    volunteerName: '', 
-    volunteerEmail: '', 
+    amount: '',
+    volunteerName: '',
+    volunteerEmail: '',
     volunteerPhone: '',
     // Extra fields for UI (may not be persisted by backend yet)
     city: '',
@@ -59,6 +62,23 @@ export default function Donate() {
   });
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  // Pre-fill fields from Query Params (e.g. from Demand Predictor or WhatsApp link)
+  useEffect(() => {
+    if (router.isReady && router.query) {
+      const { foodItem, quantity, location, foodType, city } = router.query;
+      if (foodItem || quantity || location || city) {
+        setFormData(prev => ({
+          ...prev,
+          foodItem: foodItem || prev.foodItem,
+          quantity: quantity || prev.quantity,
+          location: location || prev.location,
+          city: city || prev.city,
+          foodType: foodType || prev.foodType
+        }));
+      }
+    }
+  }, [router.isReady, router.query]);
 
   useEffect(() => {
     if (user) {
@@ -120,18 +140,18 @@ export default function Donate() {
           const toastId = toast.loading(`Syncing ${offlineDonations.length} offline donations...`);
           let successCount = 0;
           const remaining = [];
-          
+
           for (const donation of offlineDonations) {
             try {
-               const res = await fetch('/api/donations', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(donation)
-               });
-               if (res.ok) successCount++;
-               else remaining.push(donation);
+              const res = await fetch('/api/donations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(donation)
+              });
+              if (res.ok) successCount++;
+              else remaining.push(donation);
             } catch (e) {
-               remaining.push(donation);
+              remaining.push(donation);
             }
           }
 
@@ -189,9 +209,9 @@ export default function Donate() {
 
     let processedText = lower;
     Object.keys(hindiNumbers).forEach(key => {
-        processedText = processedText.replace(new RegExp(`\\b${key}\\b`, 'g'), hindiNumbers[key]);
+      processedText = processedText.replace(new RegExp(`\\b${key}\\b`, 'g'), hindiNumbers[key]);
     });
-    
+
     // 1. Extract Quantity (e.g., "10 plates", "5 kg")
     const qtyMatch = processedText.match(/(\d+)\s*(plates?|kg|meals?|packets?|servings?|people|logo|thali)?/);
     let textWithoutQty = processedText;
@@ -240,24 +260,24 @@ export default function Donate() {
 
     // Offline Handling
     if (!navigator.onLine) {
-        let payload = {};
-        if (donationType === 'volunteer') {
-            const refNum = generateReferenceNumber();
-            payload = { ...formData, userId: user.uid, referenceNumber: refNum, type: 'volunteer' };
-            setReferenceNumber(refNum);
-            setShowSuccessModal(true);
-        } else {
-            const typeToSend = donationType === 'emergency' ? 'food' : donationType;
-            payload = { ...formData, donorId: user.uid, type: typeToSend, isEmergency: donationType === 'emergency' };
-        }
+      let payload = {};
+      if (donationType === 'volunteer') {
+        const refNum = generateReferenceNumber();
+        payload = { ...formData, userId: user.uid, referenceNumber: refNum, type: 'volunteer' };
+        setReferenceNumber(refNum);
+        setShowSuccessModal(true);
+      } else {
+        const typeToSend = donationType === 'emergency' ? 'food' : donationType;
+        payload = { ...formData, donorId: user.uid, type: typeToSend, isEmergency: donationType === 'emergency' };
+      }
 
-        const offlineDonations = JSON.parse(localStorage.getItem('offline_donations') || '[]');
-        offlineDonations.push(payload);
-        localStorage.setItem('offline_donations', JSON.stringify(offlineDonations));
-        
-        setIsSubmitting(false);
-        toast.success('Saved offline! Will sync when internet returns.');
-        return;
+      const offlineDonations = JSON.parse(localStorage.getItem('offline_donations') || '[]');
+      offlineDonations.push(payload);
+      localStorage.setItem('offline_donations', JSON.stringify(offlineDonations));
+
+      setIsSubmitting(false);
+      toast.success('Saved offline! Will sync when internet returns.');
+      return;
     }
 
     try {
@@ -280,7 +300,7 @@ export default function Donate() {
       } else {
         // Food/Money Logic
         const typeToSend = donationType === 'emergency' ? 'food' : donationType; // Fallback or specific
-        
+
         const res = await fetch('/api/donations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -288,10 +308,22 @@ export default function Donate() {
         });
         if (!res.ok) throw new Error('Failed to donate');
         const data = await res.json();
-        toast.success(`${donationType} donation successful!`);
+        toast.success(`${donationType} donation registered on blockchain!`);
         if (data.pointsEarned) {
           toast.success(`You earned ${data.pointsEarned} points!`);
           setCurrentPoints(prev => prev + data.pointsEarned);
+        }
+
+        // Show Blockchain Proof-of-Donation Certificate
+        if (donationType === 'food' || donationType === 'emergency') {
+          const proofData = data.blockchainProof || data;
+          setCreatedProof({
+            ...proofData,
+            foodItem: formData.foodItem || formData.foodType,
+            quantity: formData.quantity,
+            location: formData.location || formData.city
+          });
+          setShowProofModal(true);
         }
       }
     } catch (error) {
@@ -314,7 +346,7 @@ export default function Donate() {
       <Header />
       <main className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          
+
           {/* 🔝 Top Action Tabs Section */}
           <div className="mb-10">
             <h1 className="text-4xl font-extrabold text-gray-800 text-center mb-8">Make a Difference Today</h1>
@@ -323,11 +355,10 @@ export default function Donate() {
                 <button
                   key={tab.id}
                   onClick={() => setDonationType(tab.id)}
-                  className={`flex items-center justify-center gap-2 py-4 px-6 rounded-full font-bold transition-all duration-300 shadow-sm hover:shadow-md ${
-                    donationType === tab.id 
-                      ? `${tab.activeColor} ring-2 ring-offset-2` 
-                      : 'bg-white text-gray-500 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center justify-center gap-2 py-4 px-6 rounded-full font-bold transition-all duration-300 shadow-sm hover:shadow-md ${donationType === tab.id
+                    ? `${tab.activeColor} ring-2 ring-offset-2`
+                    : 'bg-white text-gray-500 hover:bg-gray-100'
+                    }`}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
@@ -337,11 +368,11 @@ export default function Donate() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Left Column: Forms */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 relative">
-                
+
                 {/* 🍱 Food Donation Section */}
                 {(donationType === 'food' || donationType === 'emergency') && (
                   <form onSubmit={handleSubmit} className="space-y-8 animate-fadeIn">
@@ -354,8 +385,8 @@ export default function Donate() {
                         <p className="text-gray-500 text-sm">Share your meal, share the love.</p>
                       </div>
                       <div className="relative flex items-center gap-2">
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => setVoiceLang(voiceLang === 'en-US' ? 'hi-IN' : 'en-US')}
                           className="text-xs font-bold px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
                           title="Switch Language"
@@ -385,7 +416,7 @@ export default function Donate() {
                             <button
                               key={type}
                               type="button"
-                              onClick={() => setFormData({...formData, foodType: type})}
+                              onClick={() => setFormData({ ...formData, foodType: type })}
                               className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.foodType === type ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500'}`}
                             >
                               {type}
@@ -397,12 +428,12 @@ export default function Donate() {
                       {/* Food Item Name */}
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-600">Food Item</label>
-                        <input 
-                          type="text" 
-                          name="foodItem" 
-                          placeholder="e.g. Rice, Curry, Bread" 
+                        <input
+                          type="text"
+                          name="foodItem"
+                          placeholder="e.g. Rice, Curry, Bread"
                           value={formData.foodItem}
-                          onChange={handleChange} 
+                          onChange={handleChange}
                           className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
                         />
                       </div>
@@ -410,14 +441,14 @@ export default function Donate() {
                       {/* Quantity */}
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-gray-600">Quantity (People/Kg)</label>
-                        <input 
-                          type="text" 
-                          name="quantity" 
+                        <input
+                          type="text"
+                          name="quantity"
                           value={formData.quantity}
-                          placeholder="e.g. 50 meals or 10kg" 
-                          onChange={handleChange} 
+                          placeholder="e.g. 50 meals or 10kg"
+                          onChange={handleChange}
                           className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                          required 
+                          required
                         />
                       </div>
 
@@ -426,13 +457,13 @@ export default function Donate() {
                         <label className="text-sm font-bold text-gray-600">Freshness / Expiry</label>
                         <div className="relative">
                           <ClockIcon className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                          <input 
-                            type="datetime-local" 
-                            name="expiryDate" 
+                          <input
+                            type="datetime-local"
+                            name="expiryDate"
                             value={formData.expiryDate}
-                            onChange={handleChange} 
+                            onChange={handleChange}
                             className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                            required 
+                            required
                           />
                         </div>
                       </div>
@@ -448,14 +479,14 @@ export default function Donate() {
                         <label className="text-sm font-bold text-gray-600">Pickup Location</label>
                         <div className="relative">
                           <MapPinIcon className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                          <input 
-                            type="text" 
-                            name="location" 
+                          <input
+                            type="text"
+                            name="location"
                             value={formData.location}
-                            placeholder="Enter full address" 
-                            onChange={handleChange} 
+                            placeholder="Enter full address"
+                            onChange={handleChange}
                             className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                            required 
+                            required
                           />
                         </div>
                       </div>
@@ -474,20 +505,20 @@ export default function Donate() {
                     <div className="bg-green-50 p-4 rounded-xl space-y-3">
                       <h3 className="font-bold text-green-800 text-sm uppercase tracking-wide mb-2">Food Safety Confirmation</h3>
                       <label className="flex items-center gap-3 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={safetyChecks.fresh}
-                          onChange={(e) => setSafetyChecks({...safetyChecks, fresh: e.target.checked})}
-                          className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300" 
+                          onChange={(e) => setSafetyChecks({ ...safetyChecks, fresh: e.target.checked })}
+                          className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300"
                         />
                         <span className="text-gray-700 text-sm">Food is fresh, hygienic, and packed properly.</span>
                       </label>
                       <label className="flex items-center gap-3 cursor-pointer">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={safetyChecks.notExpired}
-                          onChange={(e) => setSafetyChecks({...safetyChecks, notExpired: e.target.checked})}
-                          className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300" 
+                          onChange={(e) => setSafetyChecks({ ...safetyChecks, notExpired: e.target.checked })}
+                          className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300"
                         />
                         <span className="text-gray-700 text-sm">Food is within consumption time limits.</span>
                       </label>
@@ -513,16 +544,16 @@ export default function Donate() {
                     </div>
 
                     <div className="bg-blue-50 p-8 rounded-3xl border border-blue-100">
-                        <h3 className="text-2xl font-bold text-blue-800 mb-4">Feature Coming Soon! 🚀</h3>
-                        <p className="text-gray-600 mb-6">
-                            We are currently integrating a secure payment gateway. <br/>
-                            In the meantime, you can support us by scanning the QR code below.
-                        </p>
-                        
-                        <div className="bg-white p-4 inline-block rounded-2xl shadow-lg border border-gray-200 mb-4">
-                            <img src="/qr.jpg" alt="Donate QR Code" className="w-64 h-64 object-contain" />
-                        </div>
-                        <p className="text-sm font-bold text-gray-500">Scan with any UPI App</p>
+                      <h3 className="text-2xl font-bold text-blue-800 mb-4">Feature Coming Soon! 🚀</h3>
+                      <p className="text-gray-600 mb-6">
+                        We are currently integrating a secure payment gateway. <br />
+                        In the meantime, you can support us by scanning the QR code below.
+                      </p>
+
+                      <div className="bg-white p-4 inline-block rounded-2xl shadow-lg border border-gray-200 mb-4">
+                        <img src="/qr.jpg" alt="Donate QR Code" className="w-64 h-64 object-contain" />
+                      </div>
+                      <p className="text-sm font-bold text-gray-500">Scan with any UPI App</p>
                     </div>
                   </div>
                 )}
@@ -598,7 +629,7 @@ export default function Donate() {
 
             {/* 📊 Right Side Info Panel */}
             <div className="space-y-6">
-              
+
               {!user ? (
                 <div className="bg-white rounded-3xl shadow-lg p-8 border border-gray-100 text-center animate-fadeIn">
                   <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -608,8 +639,8 @@ export default function Donate() {
                   <p className="text-gray-500 mb-8 leading-relaxed">
                     Login to view your donation history, earned points, and badges. Join the community to make a bigger difference!
                   </p>
-                  <button 
-                    onClick={() => router.push('/login')} 
+                  <button
+                    onClick={() => router.push('/login')}
                     className="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-green-600 transition-all"
                   >
                     Login to View Stats
@@ -628,15 +659,15 @@ export default function Donate() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
                         <span className="text-gray-500 text-sm font-medium">People Fed</span>
-                      <span className="text-green-600 font-bold text-xl">{userStats.peopleFed}</span>
+                        <span className="text-green-600 font-bold text-xl">{userStats.peopleFed}</span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
                         <span className="text-gray-500 text-sm font-medium">Food Saved</span>
-                      <span className="text-blue-600 font-bold text-xl">{userStats.foodSaved}kg</span>
+                        <span className="text-blue-600 font-bold text-xl">{userStats.foodSaved}kg</span>
                       </div>
                       <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
                         <span className="text-gray-500 text-sm font-medium">CO₂ Reduced</span>
-                      <span className="text-gray-800 font-bold text-xl">{userStats.co2Reduced}kg</span>
+                        <span className="text-gray-800 font-bold text-xl">{userStats.co2Reduced}kg</span>
                       </div>
                     </div>
                   </div>
@@ -669,25 +700,25 @@ export default function Donate() {
                   {/* Point Rules Card */}
                   <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100">
                     <h4 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
-                        <span>✨</span> Earning Rules
+                      <span>✨</span> Earning Rules
                     </h4>
                     <ul className="space-y-3">
-                        <li className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
-                            <span className="text-gray-600 font-medium text-sm">Donate Food</span> 
-                            <span className="font-bold text-green-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">+10 pts</span>
-                        </li>
-                        <li className="flex justify-between items-center p-3 bg-red-50 rounded-xl">
-                            <span className="text-gray-600 font-medium text-sm">Emergency Help</span> 
-                            <span className="font-bold text-red-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">+20 pts</span>
-                        </li>
-                        <li className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                            <span className="text-gray-600 font-medium text-sm">Donate Money</span> 
-                            <span className="font-bold text-blue-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">1 pt / ₹10</span>
-                        </li>
-                         <li className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
-                            <span className="text-gray-600 font-medium text-sm">Volunteer</span> 
-                            <span className="font-bold text-orange-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">+20 pts</span>
-                        </li>
+                      <li className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
+                        <span className="text-gray-600 font-medium text-sm">Donate Food</span>
+                        <span className="font-bold text-green-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">+10 pts</span>
+                      </li>
+                      <li className="flex justify-between items-center p-3 bg-red-50 rounded-xl">
+                        <span className="text-gray-600 font-medium text-sm">Emergency Help</span>
+                        <span className="font-bold text-red-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">+20 pts</span>
+                      </li>
+                      <li className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
+                        <span className="text-gray-600 font-medium text-sm">Donate Money</span>
+                        <span className="font-bold text-blue-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">1 pt / ₹10</span>
+                      </li>
+                      <li className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                        <span className="text-gray-600 font-medium text-sm">Volunteer</span>
+                        <span className="font-bold text-orange-600 bg-white px-2 py-1 rounded-lg shadow-sm text-xs">+20 pts</span>
+                      </li>
                     </ul>
                   </div>
 
@@ -715,7 +746,7 @@ export default function Donate() {
 
           {/* ⬇ Bottom Section */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-            
+
             {/* Quick Donate Money Card */}
             <div className="bg-white rounded-3xl shadow-lg p-8 border border-gray-100 flex flex-col justify-between">
               <div>
@@ -723,13 +754,13 @@ export default function Donate() {
                 <p className="text-gray-500 text-sm mb-6">Even ₹100 can feed a family for a day.</p>
                 <div className="flex gap-3 mb-6">
                   {[100, 500, 1000].map(amt => (
-                    <button key={amt} onClick={() => { setDonationType('money'); setFormData({...formData, amount: amt}); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="flex-1 py-2 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-all">
+                    <button key={amt} onClick={() => { setDonationType('money'); setFormData({ ...formData, amount: amt }); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 py-2 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-all">
                       ₹{amt}
                     </button>
                   ))}
                 </div>
               </div>
-              <button onClick={() => { setDonationType('money'); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="w-full py-3 border-2 border-blue-500 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all">
+              <button onClick={() => { setDonationType('money'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full py-3 border-2 border-blue-500 text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-all">
                 Donate Money
               </button>
             </div>
@@ -748,7 +779,7 @@ export default function Donate() {
                     </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{emergencyNeeds[0].requiredMeals} Meals Needed Immediately</h3>
                     <p className="text-gray-600 text-sm mb-6">{emergencyNeeds[0].description}</p>
-                    
+
                     <div className="flex items-center gap-4 mb-6">
                       <div className="text-center">
                         <p className="text-2xl font-bold text-gray-800">
@@ -763,7 +794,7 @@ export default function Donate() {
                       </div>
                     </div>
 
-                    <button onClick={() => { setDonationType('emergency'); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="w-full py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all">
+                    <button onClick={() => { setDonationType('emergency'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="w-full py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all">
                       Help Now
                     </button>
                   </>
@@ -809,6 +840,15 @@ export default function Donate() {
             <button onClick={() => setShowSuccessModal(false)} className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-all">Start Helping</button>
           </div>
         </div>
+      )}
+
+      {/* --- 🛡️ BLOCKCHAIN PROOF OF DONATION MODAL --- */}
+      {showProofModal && createdProof && (
+        <ProofOfDonationModal
+          proof={createdProof}
+          donation={createdProof}
+          onClose={() => setShowProofModal(false)}
+        />
       )}
 
       <style jsx>{`

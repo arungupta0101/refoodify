@@ -510,8 +510,8 @@ export default function DemandPredictionPage() {
                             </Link>
 
                             <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-900/50 space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-                                <Link href="/donate" className="flex items-center gap-2 p-2 rounded-xl hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 transition-colors">
-                                    <span>🚀</span> Create Donation Listing
+                                <Link href={`/donate?foodItem=${encodeURIComponent(foodItem)}&quantity=${computedMetrics.expectedSurplus}kg&location=${encodeURIComponent(location)}&foodType=${encodeURIComponent(mealType)}`} className="flex items-center gap-2 p-2 rounded-xl hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 transition-colors">
+                                    <span>🚀</span> Create Donation Listing ({computedMetrics.expectedSurplus} kg)
                                 </Link>
                                 <Link href="/route-optimization" className="flex items-center gap-2 p-2 rounded-xl hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 transition-colors">
                                     <span>📅</span> Set Pickup Time & Route
@@ -595,7 +595,7 @@ export default function DemandPredictionPage() {
                                 <span>🛒</span> Adjust Quantity
                             </button>
 
-                            <Link href="/donate" className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100/80 border border-purple-100 dark:border-purple-900/40 text-[11px] font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5 transition-all">
+                            <Link href={`/donate?foodItem=${encodeURIComponent(foodItem)}&quantity=${computedMetrics.expectedSurplus}kg&location=${encodeURIComponent(location)}&foodType=${encodeURIComponent(mealType)}`} className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100/80 border border-purple-100 dark:border-purple-900/40 text-[11px] font-bold text-purple-800 dark:text-purple-300 flex items-center gap-1.5 transition-all">
                                 <span>💜</span> List Surplus
                             </Link>
 
