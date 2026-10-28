@@ -22,24 +22,28 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       let user = null;
       if (mongoose.Types.ObjectId.isValid(uid)) {
-        user = await User.findById(uid);
+        user = await User.findById(uid).lean();
       }
       if (!user) {
-        user = await User.findOne({ $or: [{ email: uid }, { firebaseUid: uid }] });
+        user = await User.findOne({ $or: [{ email: uid }, { firebaseUid: uid }] }).lean();
       }
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Generate Referral Code if missing
+      // Generate Referral Code if missing — only write when needed
       if (!user.referralCode) {
         const prefix = (user.name ? user.name.replace(/[^a-zA-Z]/g, '').substring(0, 4) : 'USER').toUpperCase();
         const randomNum = Math.floor(1000 + Math.random() * 9000);
-        user.referralCode = `${prefix}${randomNum}`;
-        await user.save();
+        const newCode = `${prefix}${randomNum}`;
+        // Atomic update — no full document read-modify-write cycle
+        await User.updateOne({ _id: user._id }, { $set: { referralCode: newCode } });
+        user.referralCode = newCode;
       }
 
-      res.status(200).json(user);
+      // Add light cache hint for the browser (60s)
+      res.setHeader('Cache-Control', 'private, max-age=60');
+      return res.status(200).json(user);
     } else if (req.method === 'PUT') {
       const updatedUser = await User.findByIdAndUpdate(uid, req.body, { new: true });
       res.status(200).json(updatedUser);

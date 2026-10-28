@@ -137,13 +137,14 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      // Fetch Profile
-      const profileRes = await fetch(`/api/user/profile?uid=${user.uid}`);
+      // ── PHASE 1: Critical data — fetch in parallel, then show the page ──
+      const [profileRes, donationRes, notifRes] = await Promise.all([
+        fetch(`/api/user/profile?uid=${user.uid}`),
+        fetch(`/api/donations?userId=${user.uid}`),
+        fetch(`/api/notifications?userId=${user.uid}`)
+      ]);
+
       let profileData = null;
-      // Fetch Donations for Stats
-      const donationRes = await fetch(`/api/donations?userId=${user.uid}`);
-      // Fetch Notifications
-      const notifRes = await fetch(`/api/notifications?userId=${user.uid}`);
 
       if (profileRes.ok) {
         profileData = await profileRes.json();
@@ -188,109 +189,91 @@ export default function Profile() {
         setNotifications(await notifRes.json());
       }
 
-      // NGO: Fetch Nearby Donations
+      // ── Page is ready to show — stop loading spinner ──
+      // All secondary data (leaderboard, partners) loads in the background
+      setLoading(false);
+
       const currentUserType = profileData?.userType || user.userType;
       const normalizedRole = currentUserType === 'donor' ? 'user' : currentUserType;
 
+      // ── PHASE 2: Secondary data — background fetch, no loading state held ──
+      // NGO: Fetch Nearby Donations
       if (normalizedRole === 'ngo') {
-        const availRes = await fetch(`/api/get-available-donations?ngoId=${user.uid}`);
-        if (availRes.ok) {
-          const allDonations = await availRes.json();
-          // Simple filter: Check if donation location contains user's city/address keywords
-          // For prototype, we show all or filter loosely
-          const userLoc = (user.address || '').toLowerCase();
-          const filtered = allDonations.filter(d =>
-            userLoc && d.location && (d.location.toLowerCase().includes(userLoc) || userLoc.includes(d.location.toLowerCase()))
-          );
-          // Fallback: Show all if no address match found (for demo purposes)
-          setNearbyDonations(filtered.length > 0 ? filtered : allDonations);
-        }
+        fetch(`/api/get-available-donations?ngoId=${user.uid}`)
+          .then(r => r.ok ? r.json() : [])
+          .then(allDonations => {
+            const userLoc = (user.address || '').toLowerCase();
+            const filtered = allDonations.filter(d =>
+              userLoc && d.location && (d.location.toLowerCase().includes(userLoc) || userLoc.includes(d.location.toLowerCase()))
+            );
+            setNearbyDonations(filtered.length > 0 ? filtered : allDonations);
+          })
+          .catch(() => { });
       }
 
       if (normalizedRole === 'user') {
-        const [ngoRes, rankingRes] = await Promise.all([
-          fetch('/api/leaderboard?type=ngo&sortBy=rating'),
-          fetch('/api/leaderboard?type=all&sortBy=points')
-        ]);
-
-        if (ngoRes.ok) {
-          const ngos = await ngoRes.json();
+        Promise.all([
+          fetch('/api/leaderboard?type=ngo&sortBy=rating').then(r => r.ok ? r.json() : []),
+          fetch('/api/leaderboard?type=all&sortBy=points').then(r => r.ok ? r.json() : [])
+        ]).then(([ngos, ranking]) => {
           const userCity = (profileData?.city || user.city || '').toLowerCase();
           const filteredNgos = userCity
-            ? ngos.filter((ngo) => {
+            ? ngos.filter(ngo => {
               const searchText = `${ngo.name || ''} ${ngo.organizationName || ''}`.toLowerCase();
               return searchText.includes(userCity) || userCity.includes(searchText);
             })
             : ngos;
           setNearbyNgos((filteredNgos.length > 0 ? filteredNgos : ngos).slice(0, 6));
-        }
-
-        if (rankingRes.ok) {
-          setCommunityLeaderboard((await rankingRes.json()).slice(0, 5));
-        }
+          setCommunityLeaderboard(ranking.slice(0, 5));
+        }).catch(() => { });
       }
 
       if (normalizedRole === 'restaurant') {
-        const [ngoRes, rankingRes, inventoryRes, expiryRes] = await Promise.all([
-          fetch('/api/leaderboard?type=ngo&sortBy=rating'),
-          fetch('/api/leaderboard?type=all&sortBy=points'),
-          fetch(`/api/get-inventory?userId=${user.uid}`),
-          fetch(`/api/get-expiry-alerts?userId=${user.uid}`)
-        ]);
-
-        if (ngoRes.ok) {
-          setNearbyNgos((await ngoRes.json()).slice(0, 4));
-        }
-        if (rankingRes.ok) {
-          setCommunityLeaderboard((await rankingRes.json()).slice(0, 5));
-        }
-        if (inventoryRes.ok) {
-          setInventoryItems(await inventoryRes.json());
-        }
-        if (expiryRes.ok) {
-          setExpiryAlerts(await expiryRes.json());
-        }
+        Promise.all([
+          fetch('/api/leaderboard?type=ngo&sortBy=rating').then(r => r.ok ? r.json() : []),
+          fetch('/api/leaderboard?type=all&sortBy=points').then(r => r.ok ? r.json() : []),
+          fetch(`/api/get-inventory?userId=${user.uid}`).then(r => r.ok ? r.json() : []),
+          fetch(`/api/get-expiry-alerts?userId=${user.uid}`).then(r => r.ok ? r.json() : [])
+        ]).then(([ngos, ranking, inventory, expiry]) => {
+          setNearbyNgos(ngos.slice(0, 4));
+          setCommunityLeaderboard(ranking.slice(0, 5));
+          setInventoryItems(inventory);
+          setExpiryAlerts(expiry);
+        }).catch(() => { });
       }
 
       if (normalizedRole === 'ngo') {
-        const [restaurantRes, rankingRes, partnersRes] = await Promise.all([
-          fetch('/api/leaderboard?type=restaurant&sortBy=rating'),
-          fetch('/api/leaderboard?type=all&sortBy=points'),
-          fetch('/api/partners')
-        ]);
-
-        if (restaurantRes.ok) {
-          setPartnerRestaurants((await restaurantRes.json()).slice(0, 6));
-        }
-        if (rankingRes.ok) {
-          setCommunityLeaderboard((await rankingRes.json()).slice(0, 5));
-        }
-        if (partnersRes.ok) {
-          const partnersData = await partnersRes.json();
+        Promise.all([
+          fetch('/api/leaderboard?type=restaurant&sortBy=rating').then(r => r.ok ? r.json() : []),
+          fetch('/api/leaderboard?type=all&sortBy=points').then(r => r.ok ? r.json() : []),
+          fetch('/api/partners').then(r => r.ok ? r.json() : {})
+        ]).then(([restaurants, ranking, partnersData]) => {
+          setPartnerRestaurants(restaurants.slice(0, 6));
+          setCommunityLeaderboard(ranking.slice(0, 5));
           setPartnerVolunteers((partnersData?.volunteers || []).slice(0, 6));
-        }
+        }).catch(() => { });
       }
 
       if (normalizedRole === 'admin') {
-        const [dashboardRes, reportsRes, usersRes, restaurantsRes, ngosRes, statsRes, donationsRes, inventoryRes] = await Promise.all([
-          fetch('/api/admin?type=dashboard'),
-          fetch('/api/reports'),
-          fetch('/api/admin?type=users'),
-          fetch('/api/admin?type=restaurants'),
-          fetch('/api/admin?type=ngos'),
-          fetch('/api/stats'),
-          fetch('/api/get-donations?scope=all'),
-          fetch('/api/get-inventory?scope=all')
-        ]);
-
-        if (dashboardRes.ok) setAdminStats(await dashboardRes.json());
-        if (reportsRes.ok) setAdminReports(await reportsRes.json());
-        if (usersRes.ok) setAdminUsers((await usersRes.json()).slice(0, 10));
-        if (restaurantsRes.ok) setAdminRestaurants((await restaurantsRes.json()).slice(0, 8));
-        if (ngosRes.ok) setAdminNgos((await ngosRes.json()).slice(0, 8));
-        if (statsRes.ok) setPlatformStats(await statsRes.json());
-        if (donationsRes.ok) setAllDonations(await donationsRes.json());
-        if (inventoryRes.ok) setInventoryItems(await inventoryRes.json());
+        Promise.all([
+          fetch('/api/admin?type=dashboard').then(r => r.ok ? r.json() : null),
+          fetch('/api/reports').then(r => r.ok ? r.json() : []),
+          fetch('/api/admin?type=users').then(r => r.ok ? r.json() : []),
+          fetch('/api/admin?type=restaurants').then(r => r.ok ? r.json() : []),
+          fetch('/api/admin?type=ngos').then(r => r.ok ? r.json() : []),
+          fetch('/api/stats').then(r => r.ok ? r.json() : null),
+          fetch('/api/get-donations?scope=all').then(r => r.ok ? r.json() : []),
+          fetch('/api/get-inventory?scope=all').then(r => r.ok ? r.json() : [])
+        ]).then(([dashboard, reports, users, restaurants, ngos, stats, donations, inventory]) => {
+          if (dashboard) setAdminStats(dashboard);
+          setAdminReports(reports);
+          setAdminUsers(users.slice(0, 10));
+          setAdminRestaurants(restaurants.slice(0, 8));
+          setAdminNgos(ngos.slice(0, 8));
+          if (stats) setPlatformStats(stats);
+          setAllDonations(donations);
+          setInventoryItems(inventory);
+        }).catch(() => { });
       }
 
       // Donor: Check for unrated completed donations
