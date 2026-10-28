@@ -45,10 +45,10 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.uid })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.pointsAdded > 0) toast.success(data.message, { icon: '🌟' });
-      });
+        .then(res => res.json())
+        .then(data => {
+          if (data.pointsAdded > 0) toast.success(data.message, { icon: '🌟' });
+        });
     }
   }, []);
 
@@ -128,9 +128,9 @@ export default function Home() {
               </div>
 
               <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-12 lg:gap-20 px-4 lg:px-8 py-20">
-                
+
                 {/* LEFT: HEADLINE + CTAs + LOGOS */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: -40 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
@@ -147,14 +147,14 @@ export default function Home() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                    <Link 
-                      href="/donate" 
+                    <Link
+                      href="/donate"
                       className="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold text-lg shadow-xl shadow-emerald-600/20 hover:shadow-emerald-600/40 transition-all hover:-translate-y-1"
                     >
                       Donate Food <ArrowRightIcon className="w-5 h-5 ml-2" />
                     </Link>
-                    <Link 
-                      href="/find-food" 
+                    <Link
+                      href="/find-food"
                       className="inline-flex items-center justify-center px-8 py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"
                     >
                       Find Nearby NGOs <MapPinIcon className="w-5 h-5 ml-2" />
@@ -174,7 +174,7 @@ export default function Home() {
                 </motion.div>
 
                 {/* RIGHT: 3D ILLUSTRATION + FLOATING CARDS */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: 40 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
@@ -182,7 +182,7 @@ export default function Home() {
                 >
                   <div className="relative w-full h-full flex items-center justify-center">
                     {/* Central illustration */}
-                    <motion.div 
+                    <motion.div
                       animate={{ y: [0, -20, 0] }}
                       transition={{ duration: 4, repeat: Infinity }}
                       className="absolute inset-0 flex items-center justify-center z-0"
@@ -199,7 +199,7 @@ export default function Home() {
                     </motion.div>
 
                     {/* Floating stats cards */}
-                    <motion.div 
+                    <motion.div
                       animate={{ y: [0, -40, 0], rotate: [-5, 0, -5] }}
                       transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
                       className="absolute -top-20 -right-20 lg:top-10 lg:right-0 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700 z-10"
@@ -208,7 +208,7 @@ export default function Home() {
                       <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{countMeals.toLocaleString()}</p>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                       animate={{ y: [0, 30, 0], rotate: [5, 0, 5] }}
                       transition={{ duration: 4, repeat: Infinity, delay: 1 }}
                       className="absolute bottom-20 -left-16 lg:bottom-10 lg:left-0 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700 z-10"
@@ -217,7 +217,7 @@ export default function Home() {
                       <p className="text-3xl font-black text-blue-600 dark:text-blue-400">{countDonors}</p>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                       animate={{ y: [0, -30, 0], rotate: [-3, 0, -3] }}
                       transition={{ duration: 4.5, repeat: Infinity, delay: 1.5 }}
                       className="absolute -bottom-10 right-10 lg:bottom-5 lg:right-20 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700 z-10"
@@ -233,7 +233,7 @@ export default function Home() {
             {/* ===== IMPACT DASHBOARD SECTION ===== */}
             <section className="relative py-24 lg:py-32 px-4 bg-white dark:bg-slate-950">
               <div className="max-w-6xl mx-auto">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -266,7 +266,7 @@ export default function Home() {
                       green: 'text-green-600 dark:text-green-400'
                     };
                     return (
-                      <motion.div 
+                      <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -292,7 +292,7 @@ export default function Home() {
             {/* ===== HOW IT WORKS: TIMELINE ===== */}
             <section className="relative py-24 lg:py-32 px-4 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
               <div className="max-w-6xl mx-auto">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -312,7 +312,7 @@ export default function Home() {
                     { step: 4, title: 'Delivered', desc: 'Food reaches those in need within hours.' }
                   ].map((item, i) => (
                     <div key={i} className="relative">
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: i * 0.15 }}
@@ -339,7 +339,7 @@ export default function Home() {
             {/* ===== FEATURES: ALTERNATING LAYOUT ===== */}
             <section className="relative py-24 lg:py-32 px-4 bg-white dark:bg-slate-950">
               <div className="max-w-6xl mx-auto">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   transition={{ duration: 0.8 }}
@@ -357,7 +357,7 @@ export default function Home() {
                 ].map((feature, i) => {
                   const Icon = feature.icon;
                   return (
-                    <motion.div 
+                    <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 40 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -391,7 +391,7 @@ export default function Home() {
             {/* ===== SUCCESS STORIES ===== */}
             <section className="relative py-24 lg:py-32 px-4 bg-slate-50 dark:bg-slate-900">
               <div className="max-w-6xl mx-auto">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -408,7 +408,7 @@ export default function Home() {
                     { city: 'Mumbai', impact: '5.1K Meals', story: 'Partnership with premium catering business saved premium meals daily.', image: 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=500&h=400&fit=crop&q=80' },
                     { city: 'Bangalore', impact: '1.8K Meals', story: 'College collaboration reduced waste while feeding students in need.', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=400&fit=crop&q=80' }
                   ].map((story, i) => (
-                    <motion.div 
+                    <motion.div
                       key={i}
                       initial={{ opacity: 0, y: 30 }}
                       whileInView={{ opacity: 1, y: 0 }}
@@ -423,7 +423,7 @@ export default function Home() {
                           fill
                           className="object-cover"
                         />
-                        <motion.div 
+                        <motion.div
                           className="absolute inset-0 bg-gradient-to-tr from-emerald-600/60 to-transparent"
                         ></motion.div>
                       </div>
@@ -441,7 +441,7 @@ export default function Home() {
             {/* ===== COMPARISON: TRADITIONAL VS REFOODIFY ===== */}
             <section className="relative py-24 lg:py-32 px-4 bg-white dark:bg-slate-950">
               <div className="max-w-5xl mx-auto">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -452,7 +452,7 @@ export default function Home() {
                 </motion.div>
 
                 <div className="grid md:grid-cols-2 gap-8">
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, x: -40 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
@@ -471,7 +471,7 @@ export default function Home() {
                     </ul>
                   </motion.div>
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, x: 40 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8 }}
@@ -496,7 +496,7 @@ export default function Home() {
             {/* ===== FAQ ACCORDION ===== */}
             <section className="relative py-24 lg:py-32 px-4 bg-slate-50 dark:bg-slate-900">
               <div className="max-w-3xl mx-auto">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8 }}
@@ -508,7 +508,7 @@ export default function Home() {
 
                 <div className="space-y-3">
                   {faqs.map((faq, i) => (
-                    <motion.div 
+                    <motion.div
                       key={i}
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
@@ -544,7 +544,7 @@ export default function Home() {
               <div className="absolute inset-0 -z-10">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl"></div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
@@ -556,14 +556,14 @@ export default function Home() {
                 </h2>
                 <p className="text-lg text-slate-300 mb-10 max-w-xl mx-auto">Join thousands of donors, volunteers, and NGOs making a real difference.</p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link 
-                    href="/donate" 
+                  <Link
+                    href="/donate"
                     className="inline-flex items-center justify-center px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold text-lg shadow-xl shadow-emerald-600/30 hover:shadow-emerald-600/50 transition-all hover:-translate-y-1"
                   >
                     Donate Food <ArrowRightIcon className="w-5 h-5 ml-2" />
                   </Link>
-                  <Link 
-                    href="/find-food" 
+                  <Link
+                    href="/find-food"
                     className="inline-flex items-center justify-center px-8 py-4 rounded-2xl border-2 border-white text-white font-bold text-lg hover:bg-white/10 transition-all"
                   >
                     Become a Partner <ArrowRightIcon className="w-5 h-5 ml-2" />

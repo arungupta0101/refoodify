@@ -66,17 +66,31 @@ export default async function handler(req, res) {
       }
     } else if (req.method === 'GET') {
       const { userId } = req.query;
-      const donations = await Donation.find({ donorId: userId }).sort({ createdAt: -1 });
 
-      const donationsWithNames = await Promise.all(donations.map(async (d) => {
-        const obj = d.toObject();
-        if (obj.ngoId) {
-          const ngo = await User.findById(obj.ngoId);
-          if (ngo) obj.ngoName = ngo.organizationName || ngo.name || 'NGO';
-        }
-        return obj;
+      // .lean() + select only used fields = much faster
+      const donations = await Donation.find({ donorId: userId })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .select('type foodType foodItem quantity location status ngoId donorRating verificationRating blockchainHash certificateId blockNumber createdAt isEmergency')
+        .lean();
+
+      // Batch NGO lookup — 1 query instead of N queries (was the big N+1 problem)
+      const ngoIds = [...new Set(donations.filter(d => d.ngoId).map(d => d.ngoId))];
+      let ngoMap = {};
+      if (ngoIds.length > 0) {
+        const ngos = await User.find({ _id: { $in: ngoIds } })
+          .select('organizationName name')
+          .lean();
+        ngoMap = Object.fromEntries(ngos.map(n => [n._id.toString(), n.organizationName || n.name || 'NGO']));
+      }
+
+      const result = donations.map(d => ({
+        ...d,
+        ngoName: d.ngoId ? (ngoMap[d.ngoId] || 'NGO') : undefined
       }));
-      res.status(200).json(donationsWithNames);
+
+      res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=30');
+      return res.status(200).json(result);
     } else if (req.method === 'DELETE') {
       const { id, userId } = req.query; // Add userId for security
       const donation = await Donation.findById(id);

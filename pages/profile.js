@@ -136,6 +136,39 @@ export default function Profile() {
   }, [user, authLoading]);
 
   const fetchProfile = async () => {
+    const cacheKey = `rf_profile_${user.uid}`;
+    const donCacheKey = `rf_donations_${user.uid}`;
+    const CACHE_TTL = 90_000; // 90 seconds stale-while-revalidate
+
+    // ── INSTANT: Load from localStorage cache first ──
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+      const cachedDon = JSON.parse(localStorage.getItem(donCacheKey) || 'null');
+      if (cached && Date.now() - cached.ts < CACHE_TTL) {
+        setProfile(cached.data);
+        setEditForm({
+          name: cached.data.name || '',
+          address: cached.data.street || cached.data.address || '',
+          city: cached.data.city || '',
+          state: cached.data.state || '',
+          pincode: cached.data.pincode || '',
+          email: cached.data.email || '',
+          phone: cached.data.phone || '',
+          bio: cached.data.bio || '',
+          photoURL: cached.data.photoURL || '',
+          fssai: cached.data.fssai || '',
+          workingHours: cached.data.workingHours || '',
+          registrationNumber: cached.data.registrationNumber || '',
+          coverageArea: cached.data.coverageArea || '',
+          organizationName: cached.data.organizationName || ''
+        });
+        setLoading(false); // Show page immediately from cache
+      }
+      if (cachedDon && Date.now() - cachedDon.ts < CACHE_TTL) {
+        setDonations(cachedDon.data);
+      }
+    } catch (_) { }
+
     try {
       // ── PHASE 1: Critical data — fetch in parallel, then show the page ──
       const [profileRes, donationRes, notifRes] = await Promise.all([
