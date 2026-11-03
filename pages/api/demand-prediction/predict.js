@@ -310,7 +310,7 @@ export default async function handler(req, res) {
             isDemoData,
             geminiUsed,
             message: geminiUsed
-                ? 'AI Prediction generated successfully using Gemini AI.'
+                ? 'AI Prediction generated successfully using Refoodify AI.'
                 : 'Demand prediction generated using statistical model with current inventory integration.'
         });
 

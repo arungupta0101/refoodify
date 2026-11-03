@@ -347,7 +347,7 @@ export default function DemandPredictionPage() {
                                     {loading ? (
                                         <>
                                             <ArrowPathIcon className="w-4 h-4 animate-spin" />
-                                            Analyzing Demand with Gemini AI...
+                                            Analyzing Demand with Refoodify AI...
                                         </>
                                     ) : (
                                         <>
